@@ -220,13 +220,24 @@ body.home-page .popular-courses_content {
     padding: 16px 16px 14px;
 }
 
+body.home-page .popular-courses_link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 36px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 body.home-page .popular-courses_link:hover {
-    border-color: #7084f6;
-    background: #203853;
+  border-color: #7084f6;
+  background: #203853;
 }
 
 body.home-page .popular-courses_link i {
-    transition: transform .2s ease;
+  transition: transform .2s ease;
 }
 
 body.home-page .popular-courses_link:hover i {

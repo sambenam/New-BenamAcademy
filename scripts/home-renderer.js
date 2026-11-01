@@ -117,7 +117,7 @@
             <h3 class="course-title">${item.title}</h3>
             <p class="course-description">${item.excerpt || "توضیحی برای این آیتم ثبت نشده است."}</p>
             <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="new-courses_link">
-              مشاهده توضیحات <i class="fas fa-arrow-left"></i>
+              مشاهده توضیحات <i class="fas fa-chevron-left"></i>
             </a>
           </div>
         </li>
