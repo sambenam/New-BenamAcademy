@@ -37,7 +37,7 @@
   }
   function restart() {
     clearInterval(timer);
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (!window.matchMedia || !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       timer = setInterval(() => move(1), 5000);
     }
   }

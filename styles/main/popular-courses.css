@@ -20,6 +20,7 @@
 }
 
 .popular-courses_item {
+    height: 100%;
     overflow: hidden;
     border: 1px solid #30445b;
     border-radius: 13px;

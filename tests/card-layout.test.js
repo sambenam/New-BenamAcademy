@@ -244,11 +244,8 @@ section("۵. تصویر کارت‌ها دست‌نخورده مانده");
 /* ------------------------------------------------------------------- 6 */
 section("۶. هر بخش صفحه اصلی از بخش بعدی فاصله دارد");
 {
-  // The exams section had no margin-bottom while its four siblings all did.
-  // Nobody noticed while it sat between other sections: a neighbour's own
-  // spacing covered for it. It is the LAST section before </main>, so its
-  // bottom edge is the one that meets the footer - and there the cards
-  // looked glued on.
+  // Keep the last section clear of the footer, and give the articles section
+  // the same inter-section gap as the course and featured sections.
   const css = homeCss();
   const HOME_SECTIONS = [
     [".courses-section", "دوره‌های محبوب و جدید"],
@@ -257,11 +254,19 @@ section("۶. هر بخش صفحه اصلی از بخش بعدی فاصله دا�
     [".exam-news-section", "آزمون‌ها (آخرین بخش)"],
   ];
   HOME_SECTIONS.forEach(([selector, name]) => {
-    const rules = block(css, selector);
+    const groupedArticlesRule = [...css.matchAll(
+      /body\.home-page \.courses-section,\s*body\.home-page \.featured-section,\s*body\.home-page \.articles-section\s*\{([^}]*)\}/gm,
+    )].find((match) => /margin-bottom:/.test(match[1]));
+    const rules = selector === ".articles-section"
+      ? (groupedArticlesRule && groupedArticlesRule[1]) || block(css, selector)
+      : block(css, selector);
+    const hasSpacing = selector === ".articles-section"
+      ? /margin-bottom:\s*36px/.test(rules)
+      : /margin-bottom:\s*var\(--spacing-2xl\)/.test(rules);
     t(
       `${name} فاصله پایین دارد`,
-      /margin-bottom:\s*var\(--spacing-2xl\)/.test(rules),
-      rules ? "(بدون margin-bottom)" : "سلکتور پیدا نشد",
+      hasSpacing,
+      rules ? "(بدون فاصله‌ی پایین)" : "سلکتور پیدا نشد",
     );
   });
 

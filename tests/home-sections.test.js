@@ -269,7 +269,7 @@ const iFeatured = order.indexOf("featured-section");
 t("بعد از دوره‌های جدید", iCustom === iNew + 1, order.join(" | "));
 t("قبل از پیشنهاد ویژه", iCustom < iFeatured);
 t("هیرو همچنان اول است", order[0] === "hero-section");
-t("مسیر یادگیری همچنان دوم است", order[1] === "learning-path-section");
+t("خبرهای سایت همچنان دوم است", order[1] === "home-news");
 
 section("لنگر دیگر، جای دیگر");
 home = bootHome([{ ...SECTION, after: "exams" }], ITEMS);

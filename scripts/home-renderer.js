@@ -4,6 +4,29 @@
     return;
   }
 
+  // Content entered through the admin panel is rendered as text, not markup.
+  // Escaping it prevents titles/excerpts from breaking card structure or
+  // injecting page styles/scripts into the public homepage.
+  function escapeHTML(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[char]);
+  }
+
+  function safeImageSource(value) {
+    const source = String(value || "../images/ravin.png").trim();
+    const safePath = /^(?:https?:\/\/|\/|\.\/|\.\.\/)/i.test(source);
+    const safeImageData = /^data:image\/[a-z0-9.+-]+;base64,/i.test(source);
+    if ((safePath || safeImageData) && !/[\u0000-\u001f]/.test(source)) {
+      return escapeHTML(source);
+    }
+    return "../images/ravin.png";
+  }
+
   // Load added items to identify custom items
   const addedItemsRaw = localStorage.getItem("benamacademyAddedItems");
   const addedIds = [];
@@ -77,12 +100,12 @@
           (item, index) => `
         <li class="popular-courses_item">
           <div class="popular-courses_banner">
-            <img src="${item.image || "../images/ravin.png"}" class="popular-courses_img" alt="${item.title}" />
+            <img src="${safeImageSource(item.image)}" class="popular-courses_img" alt="${escapeHTML(item.title)}" />
           </div>
           <span class="popular-courses_badge">${courseTags[index % courseTags.length]}</span>
           <div class="popular-courses_content">
-            <h3 class="course-title">${item.title}</h3>
-            <p class="course-description">${item.excerpt || "توضیحی برای این آیتم ثبت نشده است."}</p>
+            <h3 class="course-title">${escapeHTML(item.title)}</h3>
+            <p class="course-description">${escapeHTML(item.excerpt || "توضیحی برای این آیتم ثبت نشده است.")}</p>
             <div class="course-meta">
               <span><i class="far fa-clock" aria-hidden="true"></i>${courseDurations[index % courseDurations.length]}</span>
               <span><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>${courseLevels[index % courseLevels.length]}</span>
@@ -110,12 +133,12 @@
           (item) => `
         <li class="new-courses_item">
           <div class="new-courses_banner">
-            <img src="${item.image || "../images/ravin.png"}" class="new-courses_img" alt="${item.title}" />
+            <img src="${safeImageSource(item.image)}" class="new-courses_img" alt="${escapeHTML(item.title)}" />
           </div>
           <span class="new-courses_badge"> جدید </span>
           <div class="new-courses_content">
-            <h3 class="course-title">${item.title}</h3>
-            <p class="course-description">${item.excerpt || "توضیحی برای این آیتم ثبت نشده است."}</p>
+            <h3 class="course-title">${escapeHTML(item.title)}</h3>
+            <p class="course-description">${escapeHTML(item.excerpt || "توضیحی برای این آیتم ثبت نشده است.")}</p>
             <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="new-courses_link">
               مشاهده توضیحات <i class="fas fa-chevron-left"></i>
             </a>
@@ -147,7 +170,7 @@
                 <article class="featured-card" style="margin-bottom: 0;">
                 <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="featured-content">
                   <span class="content-tag">ویژه</span>
-                  <h3 class="featured-title">${item.title}</h3>
+                  <h3 class="featured-title">${escapeHTML(item.title)}</h3>
                 </a>
               </article>
             `,
@@ -160,16 +183,16 @@
       featuredGrid.innerHTML = `
         <article class="featured-card large">
           <div class="featured-image">
-            <img src="${mainItem.image || "../images/ravin.png"}" loading="lazy" />
+            <img src="${safeImageSource(mainItem.image)}" alt="${escapeHTML(mainItem.title)}" loading="lazy" />
             <span class="featured-badge">پیشنهادی</span>
           </div>
           <div class="featured-content">
             <span class="content-tag">ویژه</span>
             <a href="single-post.html?id=${encodeURIComponent(mainItem.id)}" class="featured-title">
-              ${mainItem.title}
+              ${escapeHTML(mainItem.title)}
             </a>
             <p class="featured-desc">
-              ${mainItem.excerpt || "توضیحی برای این آیتم ثبت نشده است."}
+              ${escapeHTML(mainItem.excerpt || "توضیحی برای این آیتم ثبت نشده است.")}
             </p>
           </div>
         </article>
@@ -189,17 +212,17 @@
           (item) => `
         <li class="article-item">
           <div class="article-image">
-            <img src="${item.image || "../images/ravin.png"}" alt="${item.title}" />
+            <img src="${safeImageSource(item.image)}" alt="${escapeHTML(item.title)}" />
           </div>
           <div class="article-content">
             <span class="article-category"> حسابداری </span>
             <h3 class="article-title">
               <a href="single-post.html?id=${encodeURIComponent(item.id)}">
-                ${item.title}
+                ${escapeHTML(item.title)}
               </a>
             </h3>
             <p class="article-desc">
-              ${item.excerpt || "توضیحی برای این آیتم ثبت نشده است."}
+              ${escapeHTML(item.excerpt || "توضیحی برای این آیتم ثبت نشده است.")}
             </p>
             <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="article-read-more">
               ادامه مطالعه <i class="fas fa-arrow-left"></i>
@@ -234,7 +257,7 @@
           (item) => `
         <li class="exam-news_item">
           <div class="exam-news_content">
-            <h3 class="exam-news_title">${item.title}</h3>
+            <h3 class="exam-news_title">${escapeHTML(item.title)}</h3>
             <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="exam-news_link">
               ادامه مطالعه <i class="fas fa-arrow-left"></i>
             </a>

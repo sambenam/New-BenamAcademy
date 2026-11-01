@@ -547,9 +547,5 @@ body.home-page .featured-section,
 body.home-page .articles-section {
   padding-top: 52px;
   padding-bottom: 30px;
-}
-
-body.home-page .courses-section,
-body.home-page .featured-section {
   margin-bottom: 36px;
 }

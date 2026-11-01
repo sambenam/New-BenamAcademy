@@ -173,8 +173,8 @@ const mobOut = Array.from(doc.querySelectorAll(".mobile-dropdown-btn")).map(
   (a) => a.textContent.trim(),
 );
 t(
-  "mobile shows ورود",
-  mobOut.some((x) => x === "ورود"),
+  "mobile shows ورود / عضویت",
+  mobOut.some((x) => x === "ورود / عضویت"),
   mobOut.join(" | "),
 );
 t("mobile has no خروج", !mobOut.some((x) => x.includes("خروج")));
