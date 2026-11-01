@@ -161,39 +161,15 @@
     transform: translateY(-2px);
 }
 
-/* about-us light mode */
-html[data-theme="light"] .page-title {
-    color: rgba(45, 49, 56, 0.95) !important;
-}
 
-html[data-theme="light"] .about-feature {
-    border-color: rgb(190, 177, 177) !important;
-}
 
-html[data-theme="light"] .about-feature:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-    transform: translateY(-4px) !important;
-    box-shadow: var(--shadow-md) !important;
-    border-color: var(--accent-primary) !important;
-}
 
-html[data-theme="light"] .team-member {
-    border-color: rgb(171, 210, 233) !important;
-}
 
-html[data-theme="light"] .team-member:hover {
-    border-color: var(--accent-primary) !important;
-}
 
-html[data-theme="light"] .team-socials a {
-    border-color: rgb(173, 182, 188) !important;
-}
 
-html[data-theme="light"] .team-socials a:hover {
-    background: rgb(149, 82, 82) !important;
-}
 
-/* about-us light mode */
+
+
 
 /* Responsive */
 @media (max-width: 992px) {

@@ -79,39 +79,3 @@
 .evidence-upload__hint[data-tone="ok"] {
     color: #34d399;
 }
-
-html[data-theme="light"] .evidence-upload__btn {
-    background: rgba(59, 130, 246, .08) !important;
-    border-color: rgba(59, 130, 246, .3) !important;
-    color: #1d4ed8 !important;
-}
-
-html[data-theme="light"] .evidence-upload__btn:hover {
-    background: rgba(59, 130, 246, .16) !important;
-}
-
-html[data-theme="light"] .evidence-upload__clear {
-    background: rgba(239, 68, 68, .07) !important;
-    border-color: rgba(239, 68, 68, .28) !important;
-    color: #dc2626 !important;
-}
-
-html[data-theme="light"] .evidence-upload__hint {
-    color: #64748b !important;
-}
-
-html[data-theme="light"] .evidence-upload__hint[data-tone="error"] {
-    color: #dc2626 !important;
-}
-
-html[data-theme="light"] .evidence-upload__hint[data-tone="ok"] {
-    color: #15803d !important;
-}
-
-html[data-theme="light"] .evidence-upload__preview {
-    border-color: rgba(15, 23, 42, .12) !important;
-}
-
-html[data-theme="light"] .field-optional {
-    color: #64748b !important;
-}

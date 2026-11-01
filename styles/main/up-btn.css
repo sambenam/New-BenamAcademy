@@ -33,13 +33,7 @@
     box-shadow: 0 10px 25px rgba(196, 191, 191, 0.25);
 }
 
-html[data-theme="light"] .scroll-top-btn {
-    background: rgba(164, 170, 184, 0.95) !important;
-}
 
-html[data-theme="light"] .scroll-top-btn:hover {
-    background: rgba(104, 118, 152, 0.95) !important;
-}
 
 @media (max-width:768px) {
 

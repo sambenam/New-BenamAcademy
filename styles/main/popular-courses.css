@@ -124,18 +124,10 @@
 }
 
 
-/* popular-courses light mode */
-html[data-theme="light"] .popular-courses_item,
-html[data-theme="light"] .new-courses_item {
-    border-color: #d3d7dd !important;
-}
 
-html[data-theme="light"] .popular-courses_item:hover,
-html[data-theme="light"] .new-courses_item:hover {
-    border-color: var(--accent-primary) !important;
-}
 
-/* popular-courses light mode */
+
+
 
 
 

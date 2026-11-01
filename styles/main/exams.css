@@ -166,12 +166,9 @@
     color: var(--accent-primary);
 }
 
-/* exams light mode */
-html[data-theme="light"] .exam-news_title {
-    color: #293144 !important;
-}
 
-/* exams light mode */
+
+
 
 
 @media(max-width:992px) {

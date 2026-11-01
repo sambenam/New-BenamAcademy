@@ -125,7 +125,7 @@ function bootHome(stored, extraCategory) {
   };
 
   const FILES = pageScripts("index.html", {
-    exclude: ["ai-widget.js", "up-btn.js", "toggle-btn.js"],
+    exclude: ["ai-widget.js", "up-btn.js"],
   });
   const src = FILES.map((x) =>
     fs.readFileSync(path.join(ROOT, "scripts", x), "utf8"),

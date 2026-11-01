@@ -110,16 +110,10 @@
     font-size: var(--font-size-xl);
 }
 
-/* learning-path light mode */
-html[data-theme="light"] .path-item {
-    border-color: rgb(213 210 210) !important;
-}
 
-html[data-theme="light"] .path-connector {
-    opacity: unset;
-}
 
-/* learning-path light mode */
+
+
 
 
 @media (max-width: 650px) {

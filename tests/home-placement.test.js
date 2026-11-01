@@ -524,7 +524,7 @@ section("۹. صفحه اصلی واقعاً قانون را رعایت می‌ک
   });
   const src = readScripts(
     pageScripts("index.html", {
-      exclude: ["ai-widget.js", "up-btn.js", "toggle-btn.js"],
+      exclude: ["ai-widget.js", "up-btn.js"],
     }),
   );
   try {

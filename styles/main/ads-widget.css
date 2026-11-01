@@ -1,10 +1,4 @@
-/* Promotional widget — a small glass card on the left side of the viewport.
-   Floats (position: fixed) so it never affects the page's layout.
-   - Handle (right edge, left/right chevron): slides the card almost fully away
-     and back; choice remembered for the session.
-   - While open: COMPACT by default (title only); :hover expands the full ad
-     (image, "متن تبلیغ", CTA) and leaving rolls it back.
-   Uses the site's glass + text tokens, so it matches day/night automatically. */
+
 .ads-widget {
   position: fixed;
   bottom: 10rem;

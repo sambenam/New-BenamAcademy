@@ -181,16 +181,10 @@
     opacity: 1;
 }
 
-/* articles light mode */
-html[data-theme="light"] .article-category {
-    color: #0f172a !important;
-}
 
-html[data-theme="light"] .article-meta {
-    border-top: 1px solid #d6cece !important;
-}
 
-/* articles light mode */
+
+
 
 
 @media(max-width:992px) {
@@ -282,9 +276,6 @@ body.home-page .article-category {
   font-weight: 700;
 }
 
-html[data-theme="light"] body.home-page .article-category {
-  color: #fff !important;
-}
 
 body.home-page .article-meta {
   font-size: 10px;

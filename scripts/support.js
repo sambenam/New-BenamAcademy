@@ -11,9 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
    *
    * Native <option> elements cannot be themed reliably: the browser draws
    * them with the select's own colours, so the near-white --text-primary on
-   * an almost transparent background made the choices unreadable, and in
-   * light mode they fell back to the raw OS list. This builds a real
-   * element list that follows the site theme in both modes.
+   * an almost transparent background made the choices unreadable. This builds
+   * a real element list with the site's fixed dark appearance.
    *
    * The builder used to be hardcoded to the "موضوع" field; it takes any
    * select now so the report form's dropdowns get the same treatment.
