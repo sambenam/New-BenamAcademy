@@ -149,3 +149,128 @@
         min-width: 80px;
     }
 }
+
+/* Home page-specific styles scoped to the homepage. */
+body.home-page .hero-section {
+  margin: 0 0 0;
+  position: relative;
+  background: #071321 url(/images/home-hero-reference.jpg) center 48% / cover no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 55px 6.8% 60px;
+  overflow: hidden;
+}
+
+body.home-page .hero-section::before {
+  display: none;
+}
+
+body.home-page .hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #06111ff8 0%, #06111fe8 31%, #06111f88 56%, #06111f18 100%), linear-gradient(0deg, #06111f90, transparent 45%);
+}
+
+body.home-page .hero-content {
+  position: relative;
+  z-index: 1;
+  width: min(470px, 47%);
+  max-width: 470px;
+  padding: 59px 0 30px;
+  direction: rtl;
+}
+
+body.home-page .hero-title {
+  margin: 0 0 13px;
+  color: #f5f7fb;
+  font-size: clamp(31px, 3.1vw, 42px);
+  font-weight: 800;
+  line-height: 1.55;
+  letter-spacing: -.6px;
+}
+
+body.home-page .hero-title .text-gradient {
+  background: linear-gradient(100deg, #8c9cff, #6174ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body.home-page .hero-description {
+  max-width: 460px;
+  margin: 0 0 22px;
+  color: #d0d9e7;
+  font-size: 14px;
+  line-height: 2;
+}
+
+body.home-page .hero-description .highlight {
+  color: #d0d9e7;
+  font-weight: 400;
+}
+
+body.home-page .hero-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+body.home-page .hero-actions .btn {
+  min-height: 30px;
+  padding: 10px 23px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+body.home-page .hero-actions .btn-primary {
+  background: linear-gradient(110deg, #7184ff, #596ef1);
+  box-shadow: 0 8px 24px rgba(85, 104, 237, .25);
+}
+
+body.home-page .hero-actions .btn-glass {
+  border: 1px solid #52688d;
+  color: #f2f6ff;
+  background: rgba(5, 14, 26, .4);
+}
+
+body.home-page .hero-stats {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+body.home-page .hero-section {
+  min-height: 440px;
+  background-image: linear-gradient(90deg, rgba(7, 17, 31, .95), rgba(7, 17, 31, .78)),
+      linear-gradient(0deg, rgba(7, 17, 31, .68), transparent 45%),
+      url("../../images/home-hero-reference.jpg");
+  background-position: center, center, right center;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+}
+
+body.home-page .hero-content {
+  width: 100%;
+  max-width: 470px;
+  margin: 0;
+  padding: 44px 21px 28px;
+  text-align: right;
+}
+
+body.home-page .hero-title {
+  font-size: clamp(29px, 7.4vw, 38px);
+}
+
+body.home-page .hero-description {
+  font-size: 12px;
+}
+
+body.home-page .hero-actions {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 9px;
+}
+
+body.home-page .hero-actions .btn {
+  min-height: 41px;
+  padding: 9px 16px;
+  font-size: 11px;
+}
+}

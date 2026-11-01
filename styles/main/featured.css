@@ -129,3 +129,10 @@
         flex-direction: column;
     }
 }
+
+/* Home page-specific styles scoped to the homepage. */
+body.home-page .featured-section .featured-card {
+  border: 1px solid #2c425a;
+  border-radius: 15px;
+  background: #102239;
+}
