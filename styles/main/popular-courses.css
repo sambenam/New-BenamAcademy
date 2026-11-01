@@ -265,7 +265,8 @@ body.home-page #courses {
     }
 
     body.home-page .popular-courses_badge {
-        top: 101px;
+        top: 16px;
+        right: 16px;
     }
 
     body.home-page .popular-courses_content {
@@ -298,8 +299,8 @@ body.home-page #courses {
     }
 
     body.home-page .popular-courses_badge {
-        top: 12px;
-        right: 10px;
+        top: 16px;
+        right: 16px;
     }
 
     body.home-page .popular-courses_content {

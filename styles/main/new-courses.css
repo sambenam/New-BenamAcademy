@@ -268,7 +268,8 @@ body.home-page .new-courses_link:hover i {
   }
 
   body.home-page .new-courses_badge {
-    top: 101px;
+    top: 16px;
+    right: 16px;
   }
 
   body.home-page .new-courses_content {
@@ -301,8 +302,8 @@ body.home-page .new-courses_link:hover i {
   }
 
   body.home-page .new-courses_badge {
-    top: 12px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
   }
 
   body.home-page .new-courses_content {
