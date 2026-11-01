@@ -23,7 +23,9 @@ const HOME_SECTION_ANCHORS = [
   { key: "newCourses", title: "دوره‌های جدید", selector: ".new-courses" },
   { key: "specials", title: "پیشنهاد ویژه", selector: ".featured-section" },
   { key: "articles", title: "مقالات", selector: ".articles-section" },
-  { key: "exams", title: "آزمون‌ها و اخبار", selector: ".exam-news-section" },
+  // Keep the saved `exams` key for existing custom sections, but anchor it to
+  // the homepage news ticker that now replaces the old exam/news card section.
+  { key: "exams", title: "آخرین اخبار سایت", selector: "[data-home-news]" },
 ];
 
 const HOME_SECTIONS_KEY = "benamacademyHomeSections";

@@ -22,7 +22,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    /* Fill the grid row; see .exam-news_item for the full reasoning. */
+    /* Fill the grid row so short titles don't leave shorter cards beside them. */
     height: 100%;
     overflow: hidden;
     border-radius: 24px;

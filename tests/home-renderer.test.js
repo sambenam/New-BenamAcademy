@@ -22,7 +22,6 @@ const data = {
   newCourses: { items: [item("new-1")] },
   specials: { items: [item("special-1", "data:image/png;base64,AA=="), item("special-2")] },
   articles: { items: [item("article-1")] },
-  exams: { items: [item("exam-1")] },
 };
 
 let passed = 0;
@@ -46,7 +45,6 @@ for (const selector of [
   ".featured-card.large",
   ".featured-small .featured-card",
   ".article-item",
-  ".exam-news_item",
 ]) {
   const card = document.querySelector(selector);
   test(selector + " renders the provided title as text", !!card && card.textContent.includes(payload));

@@ -59,8 +59,8 @@
    *      item on top of the defaults with no cap, so fifteen new courses
    *      turned a four-card grid into nineteen cards.
    *
-   * `defaultCount` is still accepted for the five original call sites, but
-   * the real limit comes from HOME_SLOTS, which the admin panel reads too.
+   * `defaultCount` remains as a fallback for the original call sites, but
+   * the real limit comes from HOME_SLOTS, which the admin panel also reads.
    */
   function getItemsToDisplay(categoryKey, defaultCount) {
     const category = siteData[categoryKey];
@@ -244,40 +244,6 @@
         .join("");
     } else {
       articleContainer.innerHTML = "";
-    }
-  }
-
-  // 5. EXAMS (Show first 4 defaults + all custom items)
-  const examsContainer = document.querySelector(".exam-news_items");
-  if (examsContainer) {
-    const itemsToShow = getItemsToDisplay("exams", 4);
-    if (itemsToShow.length > 0) {
-      examsContainer.innerHTML = itemsToShow
-        .map(
-          (item) => `
-        <li class="exam-news_item">
-          <div class="exam-news_content">
-            <h3 class="exam-news_title">${escapeHTML(item.title)}</h3>
-            <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="exam-news_link">
-              ادامه مطالعه <i class="fas fa-arrow-left"></i>
-            </a>
-            <div class="exam-news_meta">
-              <span>
-                <i class="far fa-calendar"></i>
-                ۲۸ تیر ۱۴۰۵
-              </span>
-              <span>
-                <i class="far fa-clock"></i>
-                ۳ دقیقه مطالعه
-              </span>
-            </div>
-          </div>
-        </li>
-      `,
-        )
-        .join("");
-    } else {
-      examsContainer.innerHTML = "";
     }
   }
 

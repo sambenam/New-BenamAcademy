@@ -275,8 +275,8 @@ section("لنگر دیگر، جای دیگر");
 home = bootHome([{ ...SECTION, after: "exams" }], ITEMS);
 const order2 = sectionOrder(home.doc);
 t(
-  "بعد از آزمون‌ها می‌نشیند",
-  order2.indexOf("custom_test") === order2.indexOf("exam-news-section") + 1,
+  "لنگر قدیمی آزمون‌ها بعد از home-news می‌نشیند",
+  order2.indexOf("custom_test") === order2.indexOf("home-news") + 1,
   order2.join(" | "),
 );
 

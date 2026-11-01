@@ -1,33 +1,11 @@
 /**
- * Home-page cards — equal height whatever the title length.
+ * Home-page card layout — equal heights and stable title rhythm.
  *
  * Run with:  node tests/card-layout.test.js
  *
- * The bug, seen first in the آزمون‌ها section: a card with a short title
- * rendered visibly different from its neighbours in the same grid row —
- * narrower content, a stubby divider line, and a card shorter than the ones
- * beside it.
- *
- * Three separate causes, all of which stayed invisible while every seeded
- * title happened to be 34-41 characters long:
- *
- *   1. `align-items: center` on .exam-news_item. The card is a column, so
- *      align-items governs the HORIZONTAL axis: the content box shrank to
- *      the width of its own text instead of filling the card. A long title
- *      filled the width anyway, which is why nobody saw it.
- *
- *   2. No height on the card. A CSS grid item is only as tall as its content
- *      unless told otherwise, so a one-line title produced a shorter card —
- *      and `margin-top: auto` on the meta row had no spare space to push
- *      into, so the footer floated up too.
- *
- *   3. No reserved height on the title. Even with equal card heights, a
- *      one-line title next to a two-line one puts the link and the meta row
- *      at different vertical positions across the row.
- *
- * All four home sections had at least cause 2. They are fixed together
- * because the next short title added through the panel would have exposed
- * the same thing in whichever section it landed in.
+ * Covers the course and article cards that are actually rendered on the
+ * homepage: short titles must not collapse cards or shift neighboring links,
+ * and long Persian words must not push a card beyond its grid column.
  */
 const { JSDOM } = require("jsdom");
 const fs = require("fs");
@@ -90,7 +68,6 @@ const SECTIONS = [
   },
   { name: "دوره‌های جدید", card: ".new-courses_item", title: ".course-title" },
   { name: "مقالات", card: ".article-item", title: ".article-title" },
-  { name: "آزمون‌ها", card: ".exam-news_item", title: ".exam-news_title" },
 ];
 
 /* ------------------------------------------------------------------- 1 */
@@ -126,31 +103,7 @@ section("۲. عنوان ارتفاع ثابت دو خط دارد");
 }
 
 /* ------------------------------------------------------------------- 3 */
-section("۳. کارت ستونی، محتوا را وسط‌چین افقی نمی‌کند");
-{
-  // The specific regression: align-items:center on a column flex container
-  // shrinks the child to its text width. Anything but "center" is fine;
-  // "stretch" is the default and what we want.
-  const css = homeCss();
-  const rules = block(css, ".exam-news_item");
-  t(
-    "آزمون‌ها — align-items دیگر center نیست",
-    !/align-items:\s*center/.test(rules),
-    /align-items:\s*([\w-]+)/.exec(rules)?.[1] || "(تعریف نشده)",
-  );
-  t("آزمون‌ها — stretch است", /align-items:\s*stretch/.test(rules));
-
-  const content = block(css, ".exam-news_content");
-  t("محتوای آزمون‌ها کل عرض را می‌گیرد", /width:\s*100%/.test(content));
-  t(
-    "محتوای آزمون‌ها min-width صفر دارد",
-    /min-width:\s*0/.test(content),
-    "وگرنه یک کلمه بلند کارت را پهن‌تر از ستون گرید می‌کند",
-  );
-}
-
-/* ------------------------------------------------------------------- 4 */
-section("۴. در مرورگر واقعی: عنوان کوتاه و بلند یک شکل می‌شوند");
+section("۳. در مرورگر واقعی: عنوان کوتاه و بلند یک شکل می‌شوند");
 {
   const html = fs.readFileSync(path.join(ROOT, "html/index.html"), "utf8");
   const dom = new JSDOM(html, {
@@ -228,8 +181,8 @@ section("۴. در مرورگر واقعی: عنوان کوتاه و بلند ی�
   });
 }
 
-/* ------------------------------------------------------------------- 5 */
-section("۵. تصویر کارت‌ها دست‌نخورده مانده");
+/* ------------------------------------------------------------------- 4 */
+section("۴. تصویر کارت‌ها دست‌نخورده مانده");
 {
   // height:100% on the card must not be confused with the height:100% these
   // already had on their <img>, which fills the banner area.
@@ -241,49 +194,27 @@ section("۵. تصویر کارت‌ها دست‌نخورده مانده");
   );
 }
 
-/* ------------------------------------------------------------------- 6 */
-section("۶. هر بخش صفحه اصلی از بخش بعدی فاصله دارد");
+/* ------------------------------------------------------------------- 5 */
+section("۵. فاصله‌ی انتهای هوم و جایگاه اخبار");
 {
-  // Keep the last section clear of the footer, and give the articles section
-  // the same inter-section gap as the course and featured sections.
   const css = homeCss();
-  const HOME_SECTIONS = [
-    [".courses-section", "دوره‌های محبوب و جدید"],
-    [".featured-section", "پیشنهاد ویژه"],
-    [".articles-section", "مقالات"],
-    [".exam-news-section", "آزمون‌ها (آخرین بخش)"],
-  ];
-  HOME_SECTIONS.forEach(([selector, name]) => {
-    const groupedArticlesRule = [...css.matchAll(
-      /body\.home-page \.courses-section,\s*body\.home-page \.featured-section,\s*body\.home-page \.articles-section\s*\{([^}]*)\}/gm,
-    )].find((match) => /margin-bottom:/.test(match[1]));
-    const rules = selector === ".articles-section"
-      ? (groupedArticlesRule && groupedArticlesRule[1]) || block(css, selector)
-      : block(css, selector);
-    const hasSpacing = selector === ".articles-section"
-      ? /margin-bottom:\s*36px/.test(rules)
-      : /margin-bottom:\s*var\(--spacing-2xl\)/.test(rules);
-    t(
-      `${name} فاصله پایین دارد`,
-      hasSpacing,
-      rules ? "(بدون فاصله‌ی پایین)" : "سلکتور پیدا نشد",
-    );
-  });
+  const html = fs.readFileSync(path.join(ROOT, "html/index.html"), "utf8");
+  const dom = new JSDOM(html);
+  t("home-news باقی مانده است", !!dom.window.document.querySelector("[data-home-news]"));
+  t("سکشن جداگانه‌ی آزمون‌ها حذف شده", !dom.window.document.querySelector(".exam-news-section"));
 
-  // Dead weight in the same rule: the second `margin-top` silently overrode
-  // the first, and `gap` was declared twice. Harmless, but it makes the rule
-  // read as if two different values were intended.
-  const items = block(css, ".exam-news_items");
-  t(
-    "margin-top در exam-news_items یک بار تعریف شده",
-    (items.match(/margin-top:/g) || []).length === 1,
-    String((items.match(/margin-top:/g) || []).length) + " بار",
+  const articlePadding = css.match(
+    /body\.home-page \.courses-section,\s*body\.home-page \.featured-section,\s*body\.home-page \.articles-section\s*\{([^}]*)\}/m,
   );
   t(
-    "gap در exam-news_items یک بار تعریف شده",
-    (items.match(/gap:/g) || []).length === 1,
-    String((items.match(/gap:/g) || []).length) + " بار",
+    "مقالات از پایین فضای داخلی دارد",
+    !!articlePadding && /padding-bottom:\s*30px/.test(articlePadding[1]),
   );
+  t(
+    "main فضای پایانی تا فوتر دارد",
+    /padding:\s*0 0 48px/.test(block(css, "body.home-page .main")),
+  );
+  dom.window.close();
 }
 
 console.log(`\n${p} تست موفق، ${f} ناموفق`);
