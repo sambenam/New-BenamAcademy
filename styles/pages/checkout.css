@@ -195,3 +195,87 @@ body {
     background: rgba(239, 68, 68, .12);
     color: #dc2626;
 }
+
+@media (max-width: 600px) {
+    body {
+        padding: 16px 12px;
+    }
+
+    .checkout-container {
+        width: 100%;
+        margin: 12px auto !important;
+        padding: 0 !important;
+    }
+
+    .glass-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .cart-item {
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .cart-item img {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 56px;
+    }
+
+    .cart-item-info {
+        min-width: 0;
+    }
+
+    .cart-item-info h4 {
+        font-size: 13px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .cart-item-info .price {
+        line-height: 1.7;
+    }
+
+    .summary-row {
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    #discountInput {
+        min-width: 0;
+        flex: 1 1 120px;
+    }
+
+    #discountBtn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    #checkoutForm > div[style*="display: flex"] {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    #checkoutForm > div[style*="display: flex"] > :is(a, button) {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .glass-card {
+        padding: 14px;
+    }
+
+    .cart-item img {
+        flex-basis: 48px;
+        width: 48px;
+        height: 48px;
+    }
+}

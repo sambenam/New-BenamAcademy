@@ -191,3 +191,61 @@ body {
     background: #e2e8f0;
     color: #1e293b;
 }
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+
+    .receipt-card {
+        border-radius: 20px;
+    }
+
+    .receipt-header {
+        padding: 28px 18px 20px;
+    }
+
+    .receipt-details {
+        padding: 18px 16px;
+    }
+
+    .receipt-row {
+        align-items: flex-start;
+        gap: 8px 12px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .receipt-row > span:first-child {
+        flex: 1 1 120px;
+    }
+
+    .receipt-row > :last-child {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        text-align: left;
+    }
+
+    .receipt-actions {
+        padding: 16px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .receipt-actions > :is(a, button) {
+        width: 100%;
+        flex: 0 0 auto;
+        padding: 12px 14px;
+    }
+}
+
+@media (max-width: 340px) {
+    .receipt-header h2 {
+        font-size: 18px;
+    }
+
+    .receipt-row > span:first-child {
+        flex-basis: 100%;
+    }
+}
