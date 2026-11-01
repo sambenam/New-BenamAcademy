@@ -336,7 +336,7 @@ body.home-page .home-nav_item>.home-nav_link {
   align-items: center;
   height: 100%;
   color: #d4deec;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   transition: color .2s ease;
 }
@@ -428,7 +428,7 @@ body.home-page .home-nav_dropdown section {
 body.home-page .home-nav_dropdown strong {
   margin-bottom: 8px;
   color: #a6b1ff;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 body.home-page .home-nav_dropdown a {
