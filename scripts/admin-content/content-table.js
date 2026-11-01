@@ -34,8 +34,8 @@ let contentAdminInitialized = false;
  * filling in a whole item:
  *
  *   1. The category has no home section at all. About thirty categories are
- *      header-menu destinations; only five appear on the home page. The home
- *      option is disabled and says why.
+ *      header-menu destinations; only four card sections appear on the home
+ *      page. News has no home-card placement, and the option is disabled.
  *
  *   2. The section has a free slot. The hint reports how many.
  *
@@ -46,7 +46,7 @@ let contentAdminInitialized = false;
  * State 3 is the normal one, not the exception: every section ships with
  * more built-in items than slots. An earlier version of this function
  * disabled the option whenever a section was full, which made the whole
- * feature unusable — all five sections are full from the very first load.
+ * feature unusable — the real sections are full from the very first load.
  */
 function refreshPlacementField() {
   const homeOption = document.getElementById("newItemPlacementHomeOption");
@@ -548,80 +548,12 @@ function renderContentTable() {
       return;
     }
 
-    // 2. Normal Grouped Accordion Mode
-    const groups = [
-      {
-        id: "group-students",
-        title: "🎓 منوهای هدر: برای دانشجویان",
-        categories: [
-          "diploma",
-          "associate_degree",
-          "bachelor",
-          "master",
-          "phd",
-          "konkur1",
-          "konkur2",
-          "konkur3",
-          "Enterpreneurship_projects",
-          "Enternship-projects",
-          "Financial-project",
-        ],
-      },
-      {
-        id: "group-files",
-        title: "📂 منوهای هدر: فایل‌های حسابداری",
-        categories: ["power_point", "Exel", "Word"],
-      },
-      {
-        id: "group-others",
-        title: "📝 منوهای هدر: مقالات، ویدیوها و بخشنامه‌ها",
-        categories: [
-          "accounting_article",
-          "software_training",
-          "standards",
-          "accounting_circulars",
-          "videos",
-        ],
-      },
-      {
-        id: "group-main",
-        title: "🏠 سکشن‌های صفحه اصلی",
-        categories: [
-          "beginner",
-          "intermediate",
-          "advanced",
-          "popularCourses",
-          "newCourses",
-          "specials",
-          "articles",
-          "exams",
-        ],
-      },
-    ];
-
-    const allCategoriesInGroups = [];
-    groups.forEach(function (g) {
-      if (Array.isArray(g.categories)) {
-        g.categories.forEach(function (c) {
-          allCategoriesInGroups.push(c);
-        });
-      }
+    // 2. Normal Grouped Accordion Mode. The same schema drives the Add Item
+    // selector, so the four public menu groups and About Us cannot drift apart.
+    const groups = getContentCategoryGroups({
+      includeCustom: true,
+      includeFallback: true,
     });
-
-    const fallbackCategories = [];
-    Object.keys(siteData).forEach(function (catKey) {
-      if (allCategoriesInGroups.indexOf(catKey) === -1) {
-        fallbackCategories.push(catKey);
-      }
-    });
-
-    if (fallbackCategories.length > 0) {
-      groups.push({
-        id: "group-fallback",
-        title: "⚙️ سایر دسته‌بندی‌های سایت",
-        categories: fallbackCategories,
-      });
-    }
 
     let htmlContent = "";
 

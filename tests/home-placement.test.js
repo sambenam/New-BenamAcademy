@@ -49,12 +49,13 @@ section("۱. قوانین ظرفیت — منطق خالص");
   const slots = require("../scripts/home-slots.js");
 
   t(
-    "پنج بخش صفحه اصلی تعریف شده‌اند",
-    Object.keys(slots.HOME_SLOTS).length === 5,
+    "چهار بخش واقعی صفحه اصلی تعریف شده‌اند",
+    Object.keys(slots.HOME_SLOTS).length === 4,
     Object.keys(slots.HOME_SLOTS).join(","),
   );
   t("دوره‌های محبوب چهار جا دارد", slots.homeSlotLimit("popularCourses") === 4);
   t("پیشنهاد ویژه سه جا دارد", slots.homeSlotLimit("specials") === 3);
+  t("اخبار سکشن کارت هوم ندارد", slots.homeSlotLimit("exams") === 0);
 
   // Roughly thirty categories are header-menu destinations with no home
   // section. Offering the home option for them would be a lie.

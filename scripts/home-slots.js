@@ -39,15 +39,14 @@
  * so it must match the CSS grid in the matching stylesheet.
  *
  * A category that is not listed here never appears on the home page at all —
- * only these five sections exist there. The other ~30 categories are header
- * menu destinations and live only on their own list page.
+ * only these four card sections exist there. News is presented by the home-news
+ * ticker, while other categories live on their own list pages.
  */
 const HOME_SLOTS = {
   popularCourses: { limit: 4, title: "دوره‌های محبوب" },
   newCourses: { limit: 4, title: "دوره‌های جدید" },
   specials: { limit: 3, title: "پیشنهاد ویژه" },
   articles: { limit: 4, title: "مقالات" },
-  exams: { limit: 4, title: "آزمون‌ها و اخبار" },
 };
 
 /** Does this category have a section on the home page at all? */

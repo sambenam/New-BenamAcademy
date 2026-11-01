@@ -191,3 +191,44 @@
         grid-template-columns: 1fr;
     }
 }
+/* Site policies are part of About Us, separate from national legislation. */
+.site-policies {
+    margin: 0 0 var(--spacing-2xl);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.site-policies .section-title {
+    margin-bottom: var(--spacing-sm);
+}
+
+.site-policies__intro {
+    color: var(--text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-lg);
+}
+
+.site-policies__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.site-policies__grid a {
+    display: block;
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.035);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.site-policies__grid a:hover,
+.site-policies__grid a:focus-visible {
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.075);
+}

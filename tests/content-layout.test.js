@@ -399,12 +399,12 @@ const catCount = (key) => {
   return { label: num, cards: c.querySelectorAll(".content-item").length };
 };
 
-const homeBefore = groupStats("سکشن‌های صفحه اصلی");
+const coursesBefore = groupStats("منوی هدر: دوره‌ها");
 const begBefore = catCount("beginner");
 t(
-  "شمارنده اولیه با کارت‌ها می‌خواند",
-  homeBefore.label === homeBefore.cards,
-  `${homeBefore.label} در برابر ${homeBefore.cards}`,
+  "شمارنده اولیهٔ دوره‌ها با کارت‌ها می‌خواند",
+  coursesBefore.label === coursesBefore.cards,
+  `${coursesBefore.label} در برابر ${coursesBefore.cards}`,
 );
 
 // The category dropdown is filled when the modal opens, so open it first -
@@ -412,22 +412,36 @@ t(
 doc
   .getElementById("addNewContentItemBtn")
   .dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+const selectableCategories = [...doc.querySelectorAll("#newItemCategory option")].map(
+  (option) => option.value,
+);
+section("دسته‌های فرم افزودن با منوهای اصلی هم‌راستا است");
+["constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw", "siteTerms", "privacyRules", "purchaseRules", "copyrightRules"].forEach((key) => {
+  t(`دستهٔ ${key} در فرم هست`, selectableCategories.includes(key));
+});
+t("دستهٔ فایل حسابداری در فرم افزودن نیست", !selectableCategories.includes("power_point"));
+t("دستهٔ مقالهٔ legacy در فرم افزودن نیست", !selectableCategories.includes("accounting_article"));
+const categorySelect = doc.getElementById("newItemCategory");
+categorySelect.value = "exams";
+categorySelect.dispatchEvent(new w.Event("change", { bubbles: true }));
+t("برای اخبار placement هوم قابل انتخاب نیست", doc.querySelector('#newItemPlacementHomeOption input').disabled);
+categorySelect.value = "beginner";
+categorySelect.dispatchEvent(new w.Event("change", { bubbles: true }));
 doc.getElementById("newItemId").value = "counter-check-1";
-doc.getElementById("newItemCategory").value = "beginner";
 doc.getElementById("newItemTitle").value = "آیتم شمارنده";
 doc
   .getElementById("addNewItemForm")
   .dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true }));
 
-const homeAfter = groupStats("سکشن‌های صفحه اصلی");
+const coursesAfter = groupStats("منوی هدر: دوره‌ها");
 const begAfter = catCount("beginner");
 t(
-  "شمارنده گروه یکی بالا رفت",
-  homeAfter.label === homeBefore.label + 1,
-  `${homeBefore.label} -> ${homeAfter.label}`,
+  "شمارندهٔ گروه دوره‌ها یکی بالا رفت",
+  coursesAfter.label === coursesBefore.label + 1,
+  `${coursesBefore.label} -> ${coursesAfter.label}`,
 );
-t("کارت‌های گروه هم یکی بیشتر شد", homeAfter.cards === homeBefore.cards + 1);
-t("شمارنده و کارت هم‌خوان ماندند", homeAfter.label === homeAfter.cards);
+t("کارت‌های گروه دوره‌ها هم یکی بیشتر شد", coursesAfter.cards === coursesBefore.cards + 1);
+t("شمارنده و کارت هم‌خوان ماندند", coursesAfter.label === coursesAfter.cards);
 t(
   "شمارنده دسته هم بالا رفت",
   begAfter.label === begBefore.label + 1,
@@ -443,20 +457,20 @@ t(
     .innerHTML.includes("آیتم شمارنده"),
 );
 t(
-  "دسته‌های دیگر دست‌نخورده ماندند",
-  groupStats("منوهای هدر: فایل‌های حسابداری").label ===
-    groupStats("منوهای هدر: فایل‌های حسابداری").cards,
+  "دسته‌های legacy در گروه سایر دسته‌بندی‌ها باقی ماندند",
+  groupStats("سایر دسته‌بندی‌های موجود").label ===
+    groupStats("سایر دسته‌بندی‌های موجود").cards,
 );
 
 w.__t.deleteContentItem("counter-check-1");
 w.__t.renderContentTable();
-const homeBack = groupStats("سکشن‌های صفحه اصلی");
+const coursesBack = groupStats("منوی هدر: دوره‌ها");
 t(
-  "بعد از حذف شمارنده برمی‌گردد",
-  homeBack.label === homeBefore.label,
-  `${homeAfter.label} -> ${homeBack.label}`,
+  "بعد از حذف شمارندهٔ دوره‌ها برمی‌گردد",
+  coursesBack.label === coursesBefore.label,
+  `${coursesAfter.label} -> ${coursesBack.label}`,
 );
-t("کارت‌ها هم برگشتند", homeBack.cards === homeBefore.cards);
+t("کارت‌های دوره‌ها هم برگشتند", coursesBack.cards === coursesBefore.cards);
 
 console.log(`\n${p} تست موفق، ${f} ناموفق`);
 process.exit(f ? 1 : 0);

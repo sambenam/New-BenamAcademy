@@ -241,5 +241,50 @@ console.log("\nfresh browser on sign-up.html (default = signed-in manager)");
   );
 }
 
+console.log("\npublic legal navigation is consistent across pages");
+const publicPages = [
+  "index.html",
+  "about-us.html",
+  "list-page.html",
+  "sign-up.html",
+  "single-post.html",
+  "support.html",
+  "user-profile.html",
+];
+const expectedLawCategories = [
+  "constitution",
+  "commercialLaw",
+  "laborLaw",
+  "taxLaw",
+  "socialSecurityLaw",
+];
+for (const page of publicPages) {
+  const d = run(null, page);
+  const lawMenu = [...d.querySelectorAll(".home-nav_item")].find((item) =>
+    item.querySelector('.home-nav_link[href="list-page.html?cat=regulations"]'),
+  );
+  const desktopCategories = lawMenu
+    ? [...lawMenu.querySelectorAll(".home-nav_dropdown a")].map((a) =>
+        new URL(a.href).searchParams.get("cat"),
+      )
+    : [];
+  const mobileLawMenu = [...d.querySelectorAll(".mobile-dropdown")].find((item) =>
+    item.querySelector(".mobile-dropdown-btn")?.textContent.includes("قوانین و مقررات"),
+  );
+  const mobileCategories = mobileLawMenu
+    ? [...mobileLawMenu.querySelectorAll(".mobile-dropdown-menu a")].map((a) =>
+        new URL(a.href).searchParams.get("cat"),
+      )
+    : [];
+  t(`${page}: قوانین پایه در دسکتاپ`, expectedLawCategories.every((key) => desktopCategories.includes(key)));
+  t(`${page}: قوانین پایه در موبایل`, expectedLawCategories.every((key) => mobileCategories.includes(key)));
+  t(`${page}: سیاست‌های سایت از منوی قوانین جداست`, !desktopCategories.some((key) => ["siteTerms", "privacyRules", "purchaseRules", "copyrightRules"].includes(key)));
+}
+const aboutDoc = run(null, "about-us.html");
+const policyLinks = [...aboutDoc.querySelectorAll(".site-policies__grid a")].map((a) =>
+  new URL(a.href).searchParams.get("cat"),
+);
+t("چهار سیاست سایت در صفحه درباره ما در دسترس است", ["siteTerms", "privacyRules", "purchaseRules", "copyrightRules"].every((key) => policyLinks.includes(key)));
+
 console.log(`\n  ${p} passed, ${f} failed`);
 process.exit(f ? 1 : 0);

@@ -489,8 +489,8 @@ const headerItems = {
       },
     },
   },
-  regulations: {
-    title: "قوانین و مقررات",
+  aboutUs: {
+    title: "درباره ما",
     categories: {
       siteTerms: {
         title: "شرایط استفاده از سایت",
@@ -532,6 +532,16 @@ const headerItems = {
           content: { blocks: [{ type: "heading", level: 1, text: "حقوق مالکیت محتوا" }, { type: "paragraph", text: "متن کامل این بخش در ادامهٔ تکمیل مقررات سایت اضافه می‌شود." }], video: null, downloads: [] },
         }],
       },
+    },
+  },
+  regulations: {
+    title: "قوانین و مقررات جمهوری اسلامی ایران",
+    categories: {
+      constitution: { title: "قانون اساسی جمهوری اسلامی ایران", items: [] },
+      commercialLaw: { title: "قانون تجارت", items: [] },
+      laborLaw: { title: "قانون کار", items: [] },
+      taxLaw: { title: "قوانین مالیاتی", items: [] },
+      socialSecurityLaw: { title: "قانون تأمین اجتماعی", items: [] },
     },
   },
 };
