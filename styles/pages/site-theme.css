@@ -1,0 +1,309 @@
+/* Shared visual language for non-home public pages. This is intentionally
+   presentational only: all page structure, copy, form fields and behaviours
+   remain owned by the existing page styles and scripts. */
+
+body.site-page:not(.home-page) {
+    --bg-primary: #081522;
+    --bg-secondary: #102238;
+    --bg-tertiary: #0b1b2d;
+    --bg-glass: rgba(13, 29, 48, .78);
+    --bg-glass-light: rgba(19, 39, 62, .9);
+    --text-primary: #edf4ff;
+    --text-secondary: #c0cde0;
+    --text-muted: #91a3bc;
+    --border-color: rgba(151, 180, 218, .17);
+    --border-color-light: rgba(151, 180, 218, .25);
+    --accent-primary: #8192ff;
+    --accent-secondary: #55b9f3;
+    --primary: #8192ff;
+    --primary-dark: #a4afff;
+    --primary-soft: rgba(129, 146, 255, .16);
+    --text: #edf4ff;
+    --muted: #a3b2c7;
+    --line: rgba(151, 180, 218, .2);
+    --surface: rgba(14, 29, 48, .94);
+    --danger-soft: rgba(239, 68, 68, .14);
+    --success-soft: rgba(34, 197, 94, .14);
+    --glass-bg: rgba(14, 30, 50, .78);
+    --glass-border: rgba(151, 180, 218, .2);
+    --glass-hover: rgba(24, 47, 73, .92);
+    --card-bg: rgba(13, 29, 48, .94);
+    --up-page: radial-gradient(ellipse at 15% 0%, #142c48 0%, #091726 58%, #07121f 100%);
+    --up-card: rgba(15, 33, 54, .82);
+    --up-card-hover: rgba(21, 43, 68, .94);
+    --up-border: rgba(151, 180, 218, .2);
+    --up-field: rgba(6, 18, 31, .7);
+    --up-field-focus: rgba(9, 26, 45, .96);
+    --up-toast: rgba(12, 27, 45, .98);
+    --up-shadow: 0 18px 46px rgba(0, 0, 0, .28);
+    --shadow-card: 0 18px 48px rgba(0, 0, 0, .28);
+
+    min-height: 100vh;
+    color: #e8f0fb;
+    color-scheme: dark;
+    background:
+        radial-gradient(ellipse at 88% 5%, rgba(53, 106, 170, .22), transparent 35rem),
+        radial-gradient(ellipse at 8% 72%, rgba(35, 91, 123, .13), transparent 32rem),
+        linear-gradient(145deg, #071321 0%, #0b1a2b 52%, #0a1929 100%) !important;
+    background-attachment: fixed !important;
+}
+
+body.site-page:not(.home-page) ::selection {
+    color: #fff;
+    background: rgba(111, 133, 255, .48);
+}
+
+/* A quiet, consistent glass surface replaces the white/flat panels while
+   keeping each page's original layout and hierarchy. */
+body.site-page:not(.home-page) :is(
+    .glass-card,
+    .about-feature,
+    .team-member,
+    .list-page_container,
+    .list-page_content,
+    .list-page_item,
+    .list-page_sidebar,
+    .signup-container,
+    .single-post_container,
+    .single-post_content,
+    .single-post_sidebar,
+    .contact-card,
+    .contact-form-section,
+    .faq-section,
+    .faq-item,
+    .cart-item,
+    .cart-summary,
+    .gateway-desktop-card,
+    .merchant-column,
+    .form-column,
+    .merchant-amount-box,
+    .receipt-card,
+    .receipt-details,
+    .verification-card
+) {
+    color: #e8f0fb;
+    background: linear-gradient(145deg, rgba(17, 37, 60, .94), rgba(10, 25, 42, .9)) !important;
+    border-color: rgba(151, 180, 218, .18);
+    box-shadow: 0 18px 46px rgba(0, 0, 0, .22);
+}
+
+body.site-page:not(.home-page) :is(
+    .list-page_container,
+    .signup-container,
+    .single-post_container,
+    .contact-form-section,
+    .faq-section,
+    .glass-card,
+    .gateway-desktop-card,
+    .receipt-card,
+    .verification-card
+) {
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+body.site-page:not(.home-page) :is(
+    .about-feature,
+    .team-member,
+    .list-page_item,
+    .cart-item,
+    .cart-summary,
+    .faq-item
+) {
+    background: rgba(17, 37, 60, .76);
+    border: 1px solid rgba(151, 180, 218, .16);
+}
+
+body.site-page:not(.home-page) :is(
+    .list-page_title,
+    .list-page_item_title,
+    .about-feature h3,
+    .team-member h3,
+    .card-header h2,
+    .cart-item-info h4,
+    .summary-row.total,
+    .form-column-header h2,
+    .merchant-brand h3,
+    .detail-item strong,
+    .receipt-row strong,
+    .receipt-header h2,
+    .verification-card h1
+) {
+    color: #eef4ff;
+}
+
+body.site-page:not(.home-page) :is(
+    .list-page_item_text,
+    .about-feature p,
+    .team-member p,
+    .card-header p,
+    .summary-row,
+    .form-column-header p,
+    .detail-item span,
+    .receipt-row span,
+    .description,
+    .security-note
+) {
+    color: #b7c6da;
+}
+
+/* Search, forms and editable controls use a shared inset navy surface. */
+body.site-page:not(.home-page) :is(input, select, textarea, .custom-select-trigger, .custom-select-options) {
+    color: #edf4ff !important;
+    background-color: rgba(7, 19, 33, .82) !important;
+    border-color: rgba(151, 180, 218, .24) !important;
+}
+
+body.site-page:not(.home-page) :is(input, select, textarea)::placeholder {
+    color: #8194ad;
+    opacity: 1;
+}
+
+body.site-page:not(.home-page) :is(input, select, textarea):focus {
+    border-color: rgba(129, 146, 255, .78) !important;
+    background-color: rgba(8, 23, 40, .96) !important;
+    box-shadow: 0 0 0 3px rgba(112, 132, 255, .16) !important;
+}
+
+body.site-page:not(.home-page) input[type="checkbox"],
+body.site-page:not(.home-page) input[type="radio"] {
+    accent-color: #8192ff;
+}
+
+/* Blue action surfaces echo the homepage; success and danger states retain
+   their familiar semantic colours. */
+body.site-page:not(.home-page) :is(
+    .btn-primary,
+    .btn-action-primary,
+    .btn-submit-gateway,
+    .verify-btn,
+    .evidence-upload__btn,
+    .list-page_item_btn
+) {
+    color: #fff !important;
+    background: linear-gradient(115deg, #7185ff 0%, #398ed6 100%) !important;
+    border-color: transparent !important;
+    box-shadow: 0 10px 24px rgba(61, 111, 220, .24);
+}
+
+body.site-page:not(.home-page) :is(
+    .btn-secondary,
+    .btn-action-secondary,
+    .resend-btn,
+    .evidence-upload__clear
+) {
+    color: #dce6f5;
+    background: rgba(101, 129, 184, .15);
+    border-color: rgba(151, 180, 218, .24);
+}
+
+body.site-page:not(.home-page) :is(
+    .btn-primary,
+    .btn-action-primary,
+    .btn-submit-gateway,
+    .verify-btn,
+    .evidence-upload__btn,
+    .list-page_item_btn
+):hover {
+    filter: brightness(1.08);
+}
+
+/* The payment summary and receipt keep their status colours, but no longer
+   switch back to white surfaces. */
+body.site-page:not(.home-page) .merchant-amount-box {
+    background: linear-gradient(135deg, rgba(67, 103, 192, .27), rgba(26, 104, 153, .2)) !important;
+    border-color: rgba(120, 158, 255, .28) !important;
+}
+
+body.site-page:not(.home-page) .merchant-amount-box :is(span, .amount-value) {
+    color: #c7d5ff;
+}
+
+body.site-page:not(.home-page) .receipt-details {
+    background: rgba(8, 22, 38, .74) !important;
+    border-color: rgba(151, 180, 218, .17) !important;
+}
+
+body.site-page:not(.home-page) .receipt-card.success .receipt-header,
+body.site-page:not(.home-page) .receipt-card.failed .receipt-header {
+    color: #fff;
+}
+
+body.site-page:not(.home-page) .code-input {
+    color: #f2f6ff !important;
+    background: rgba(7, 19, 33, .86) !important;
+    border-color: rgba(151, 180, 218, .25) !important;
+}
+
+body.site-page:not(.home-page) .code-container.has-error .code-input {
+    background: rgba(127, 29, 47, .22) !important;
+}
+
+body.site-page:not(.home-page) .code-container.has-success .code-input {
+    color: #86efac !important;
+    background: rgba(21, 128, 61, .15) !important;
+}
+
+body.site-page:not(.home-page) .verification-page::before {
+    background: radial-gradient(circle, rgba(91, 115, 255, .2), rgba(91, 115, 255, 0));
+}
+
+body.site-page:not(.home-page) .verification-page::after {
+    background: radial-gradient(circle, rgba(31, 153, 199, .17), rgba(31, 153, 199, 0));
+}
+
+body.site-page:not(.home-page) .receipt-row .badge,
+body.site-page:not(.home-page) .receipt-card.success .badge,
+body.site-page:not(.home-page) .receipt-card.failed .badge {
+    color: #f2f6ff;
+    background: rgba(255, 255, 255, .12);
+}
+
+@media (max-width: 620px) {
+    body.site-page:not(.home-page) {
+        background-attachment: scroll !important;
+    }
+}
+
+/* The admin workspace uses the same palette, while keeping its dashboard
+   layout, navigation and interactive states unchanged. */
+body.site-page.admin-page :is(.sidebar, .dropdown-menu, .notification-dropdown, .notification-detail-modal, .modal-box, .messages-floating-panel) {
+    color: #e8f0fb;
+    background: rgba(11, 26, 44, .96) !important;
+    border-color: rgba(151, 180, 218, .2) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .32);
+}
+
+body.site-page.admin-page :is(.sidebar-header, .sidebar-footer, .notif-header, .notif-footer, .modal-header, .modal-footer) {
+    border-color: rgba(151, 180, 218, .17) !important;
+}
+
+body.site-page.admin-page .sidebar-nav a {
+    color: #b8c7dc;
+}
+
+body.site-page.admin-page .sidebar-nav a:hover,
+body.site-page.admin-page .sidebar-nav>ul>li.active>a {
+    color: #f0f4ff;
+    background: rgba(111, 132, 255, .16);
+}
+
+body.site-page.admin-page .sidebar-nav>ul>li.active>a i,
+body.site-page.admin-page .logo i {
+    color: #9aa8ff;
+}
+
+body.site-page.admin-page .notification-dropdown :is(.notif-item-uniform, .notif-footer) {
+    color: #dce6f5;
+    background: rgba(255, 255, 255, .045);
+    border-color: rgba(151, 180, 218, .14);
+}
+
+body.site-page.admin-page .notification-dropdown .notif-item-uniform:hover {
+    background: rgba(111, 132, 255, .12);
+}
+
+body.site-page.admin-page .notification-dropdown .notif-icon {
+    color: #dce6ff;
+    background: rgba(111, 132, 255, .16);
+}

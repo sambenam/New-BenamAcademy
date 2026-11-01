@@ -4,8 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#f5f7ff">
-    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#081522">
+    <meta name="color-scheme" content="dark">
 
     <!-- در صورت استفاده بک‌اند از CSRF، مقدار content را در سرور جای‌گذاری کنید. -->
     <meta name="csrf-token" content="">
@@ -13,9 +13,10 @@
     <title>تأیید حساب کاربری | بنام آکادمی</title>
     <link rel="icon" type="image/png" href="../images/benam-academy-icon.png">
     <link rel="stylesheet" href="../styles/pages/verification.css">
+  <link rel="stylesheet" href="../styles/pages/site-theme.css" />
 </head>
 
-<body data-verify-endpoint="/api/auth/verify-code" data-resend-endpoint="/api/auth/resend-code"
+<body class="site-page" data-verify-endpoint="/api/auth/verify-code" data-resend-endpoint="/api/auth/resend-code"
     data-success-url="index.html" data-login-url="sign-up.html" data-resend-delay="60" data-request-timeout="15000">
     <main class="verification-page">
         <section class="verification-card" aria-labelledby="pageTitle" aria-describedby="verificationDescription">
