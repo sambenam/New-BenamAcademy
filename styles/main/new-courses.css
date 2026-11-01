@@ -159,6 +159,7 @@
 body.home-page .new-courses_items {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 1em;
+  padding-inline-start: 40px;
 }
 
 body.home-page .new-courses_item {
@@ -179,22 +180,6 @@ body.home-page .new-courses_item:hover {
   transform: translateY(-4px);
   border-color: #667bd6;
   box-shadow: 0 17px 35px rgba(0, 0, 0, .26);
-}
-
-body.home-page .new-courses_badge {
-  position: relative;
-  top: auto;
-  right: auto;
-  z-index: auto;
-  display: inline-block;
-  margin-top: -14px;
-  padding: 4px 10px;
-  border: 1px solid #6173a2;
-  border-radius: 15px;
-  color: inherit;
-  background: #1b2c51;
-  font-size: 10px;
-  font-weight: 400;
 }
 
 body.home-page .new-courses_banner {
@@ -235,15 +220,14 @@ body.home-page .new-courses_link {
   width: 100%;
   box-sizing: border-box;
   min-height: 36px;
-  padding: 10px;
   border: 1px solid #3d5d83;
   border-radius: 25px;
   color: #cbd5e1;
   background: #1a2b40;
   font-size: 11px;
   font-weight: 400;
-  line-height: 1.4;
   text-align: center;
+  transition: none;
 }
 
 body.home-page .new-courses_link:hover {
@@ -330,4 +314,11 @@ body.home-page .new-courses_content {
   min-height: 168px;
   padding: 13px 12px;
 }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.home-page .new-courses_item,
+  body.home-page .new-courses_img {
+    transition: none !important;
+  }
 }
