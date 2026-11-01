@@ -496,6 +496,7 @@ function renderContentTable() {
     // 1. Search Mode
     if (searchQuery) {
       const items = getAllSiteItems().filter(function (row) {
+        if (!isAdminContentCategory(row.categoryKey)) return false;
         return (
           String(row.id).toLowerCase().includes(searchQuery) ||
           String(row.title).toLowerCase().includes(searchQuery) ||
@@ -548,8 +549,8 @@ function renderContentTable() {
       return;
     }
 
-    // 2. Normal Grouped Accordion Mode. The same schema drives the Add Item
-    // selector, so the four public menu groups and About Us cannot drift apart.
+    // 2. Normal Grouped Accordion Mode. The four header-menu groups share
+    // one schema with the Add Item selector; public site policies are hidden.
     const groups = getContentCategoryGroups({
       includeCustom: true,
       includeFallback: true,

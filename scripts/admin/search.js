@@ -137,6 +137,10 @@ function globalSearchResults(rawQuery, limitPerGroup) {
   if (typeof getAllSiteItems === "function") {
     try {
       getAllSiteItems().forEach((row) => {
+        if (
+          typeof isAdminContentCategory === "function" &&
+          !isAdminContentCategory(row.categoryKey)
+        ) return;
         if (!hit([row.id, row.title, row.categoryTitle])) return;
         push("content", {
           title: row.title || "بدون عنوان",

@@ -85,6 +85,7 @@ function boot() {
   src.push(`window.__t = {
     get siteData(){ return siteData; }, findSiteItem, renderContentTable,
     deleteContentItem, openContentEditor, contentItemRow, loadDeletedItemIds,
+    isAdminContentCategory,
   };`);
   w.eval(src.join("\n;\n"));
   w.document.dispatchEvent(new w.Event("DOMContentLoaded", { bubbles: true }));
@@ -96,8 +97,12 @@ function boot() {
 }
 
 const countData = (w) =>
-  Object.values(w.__t.siteData).reduce(
-    (n, cat) => n + (cat && cat.items ? cat.items.length : 0),
+  Object.entries(w.__t.siteData).reduce(
+    (n, [key, cat]) =>
+      n +
+      (w.__t.isAdminContentCategory(key) && cat && cat.items
+        ? cat.items.length
+        : 0),
     0,
   );
 
@@ -116,17 +121,35 @@ t(
 );
 t("هیچ آیتمی جا نیفتاده", shown > 80, String(shown));
 
-const cats = Object.keys(w.__t.siteData).length;
+const cats = Object.keys(w.__t.siteData).filter(w.__t.isAdminContentCategory).length;
 t(
-  "همه دسته‌ها رندر شدند",
+  "همه دسته‌های قابل مدیریت رندر شدند",
   box.querySelectorAll(".content-category").length === cats,
   `${box.querySelectorAll(".content-category").length} از ${cats}`,
 );
 t(
-  "چهار گروه اصلی هست",
-  box.querySelectorAll(".content-group").length >= 4,
-  String(box.querySelectorAll(".content-group").length),
+  "سیاست‌های سایت در فهرست مدیریت نیستند",
+  ![...box.querySelectorAll(".content-category__key")].some((key) =>
+    ["siteTerms", "privacyRules", "purchaseRules", "copyrightRules", "aboutUs"].includes(key.textContent),
+  ),
 );
+const headerGroups = [...box.querySelectorAll(".content-group")].slice(0, 4);
+t(
+  "چهار گروه منوی هدر وجود دارد",
+  headerGroups.map((group) => group.dataset.group).join(",") ===
+    "group-students,group-courses,group-regulations,group-news",
+);
+const headerGroupTitles = headerGroups.map((group) =>
+  group.querySelector(".content-group__title").textContent,
+);
+[
+  "منوهای هدر: برای دانشجویان",
+  "منوهای هدر: دوره‌ها",
+  "منوهای هدر: قوانین و مقررات",
+  "منوهای هدر: اخبار",
+].forEach((title, index) => {
+  t(`عنوان گروه هدر ${index + 1} درست است`, headerGroupTitles[index].includes(title));
+});
 
 // ------------------------------------------------------------ the old problem
 section("سرستون تکراری حذف شد");
@@ -288,9 +311,10 @@ t(
 section("جستجو");
 ({ w, doc, store } = boot());
 const search = doc.getElementById("contentTableSearch");
-const anyItem = Object.values(w.__t.siteData).find(
-  (c) => c.items && c.items.length,
-).items[0];
+const anyItem = Object.entries(w.__t.siteData).find(
+  ([key, category]) =>
+    w.__t.isAdminContentCategory(key) && category.items && category.items.length,
+)[1].items[0];
 search.value = anyItem.title.slice(0, 6);
 search.dispatchEvent(new w.Event("input", { bubbles: true }));
 const results = doc.querySelectorAll("#groupedContentContainer .content-item");
@@ -314,6 +338,13 @@ t(
   !!doc.querySelector(
     "#groupedContentContainer .content-edit-btn[data-item-id]",
   ),
+);
+
+search.value = "regulations-terms";
+search.dispatchEvent(new w.Event("input", { bubbles: true }));
+t(
+  "سیاست‌های سایت در جستجوی پنل هم نمایش داده نمی‌شوند",
+  doc.getElementById("groupedContentContainer").textContent.includes("پیدا نشد"),
 );
 
 search.value = "یک عبارت که قطعا وجود ندارد zzz";
@@ -399,7 +430,7 @@ const catCount = (key) => {
   return { label: num, cards: c.querySelectorAll(".content-item").length };
 };
 
-const coursesBefore = groupStats("منوی هدر: دوره‌ها");
+const coursesBefore = groupStats("منوهای هدر: دوره‌ها");
 const begBefore = catCount("beginner");
 t(
   "شمارنده اولیهٔ دوره‌ها با کارت‌ها می‌خواند",
@@ -416,8 +447,11 @@ const selectableCategories = [...doc.querySelectorAll("#newItemCategory option")
   (option) => option.value,
 );
 section("دسته‌های فرم افزودن با منوهای اصلی هم‌راستا است");
-["constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw", "siteTerms", "privacyRules", "purchaseRules", "copyrightRules"].forEach((key) => {
+["constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"].forEach((key) => {
   t(`دستهٔ ${key} در فرم هست`, selectableCategories.includes(key));
+});
+["siteTerms", "privacyRules", "purchaseRules", "copyrightRules", "aboutUs"].forEach((key) => {
+  t(`دستهٔ ${key} از مدیریت خارج است`, !selectableCategories.includes(key));
 });
 t("دستهٔ فایل حسابداری در فرم افزودن نیست", !selectableCategories.includes("power_point"));
 t("دستهٔ مقالهٔ legacy در فرم افزودن نیست", !selectableCategories.includes("accounting_article"));
@@ -433,7 +467,7 @@ doc
   .getElementById("addNewItemForm")
   .dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true }));
 
-const coursesAfter = groupStats("منوی هدر: دوره‌ها");
+const coursesAfter = groupStats("منوهای هدر: دوره‌ها");
 const begAfter = catCount("beginner");
 t(
   "شمارندهٔ گروه دوره‌ها یکی بالا رفت",
@@ -464,7 +498,7 @@ t(
 
 w.__t.deleteContentItem("counter-check-1");
 w.__t.renderContentTable();
-const coursesBack = groupStats("منوی هدر: دوره‌ها");
+const coursesBack = groupStats("منوهای هدر: دوره‌ها");
 t(
   "بعد از حذف شمارندهٔ دوره‌ها برمی‌گردد",
   coursesBack.label === coursesBefore.label,

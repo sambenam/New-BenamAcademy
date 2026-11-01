@@ -6,14 +6,31 @@
 /**
  * The admin's primary groups follow the public header menus. Keep this one
  * schema for both the content list and the Add Item category selector.
- * Homepage-only slots and custom homepage sections are included separately;
- * legacy categories stay visible in the content list, but are not offered for
- * new items unless they belong to a menu or homepage section.
+ * Homepage-only slots and custom homepage sections are included separately.
+ * Public About Us policies stay in site data but are intentionally outside
+ * admin listing, search, editing, and Add Item workflows.
  */
+const ADMIN_HIDDEN_CONTENT_CATEGORIES = [
+  // Public About Us policies are static from the admin's point of view.
+  "siteTerms",
+  "privacyRules",
+  "purchaseRules",
+  "copyrightRules",
+  "aboutUs",
+  // Header aggregates are navigation destinations, not editable leaf groups.
+  "forStudents",
+  "accountingFiles",
+  "regulations",
+];
+
+function isAdminContentCategory(categoryKey) {
+  return ADMIN_HIDDEN_CONTENT_CATEGORIES.indexOf(categoryKey) === -1;
+}
+
 const CONTENT_CATEGORY_GROUPS = [
   {
     id: "group-students",
-    title: "🎓 منوی هدر: برای دانشجویان",
+    title: "🎓 منوهای هدر: برای دانشجویان",
     categories: [
       "diploma",
       "associate_degree",
@@ -30,12 +47,12 @@ const CONTENT_CATEGORY_GROUPS = [
   },
   {
     id: "group-courses",
-    title: "🎬 منوی هدر: دوره‌ها",
+    title: "🎬 منوهای هدر: دوره‌ها",
     categories: ["beginner", "intermediate", "advanced", "videos"],
   },
   {
     id: "group-regulations",
-    title: "⚖️ منوی هدر: قوانین و مقررات",
+    title: "⚖️ منوهای هدر: قوانین و مقررات",
     categories: [
       "constitution",
       "commercialLaw",
@@ -46,13 +63,8 @@ const CONTENT_CATEGORY_GROUPS = [
   },
   {
     id: "group-news",
-    title: "📰 منوی هدر: اخبار",
+    title: "📰 منوهای هدر: اخبار",
     categories: ["exams"],
-  },
-  {
-    id: "group-about-us",
-    title: "ℹ️ درباره ما",
-    categories: ["siteTerms", "privacyRules", "purchaseRules", "copyrightRules"],
   },
   {
     id: "group-home",
@@ -97,7 +109,10 @@ function getContentCategoryGroups(options) {
       });
     });
     const fallbackCategories = Object.keys(siteData).filter(function (key) {
-      return knownCategories.indexOf(key) === -1;
+      return (
+        isAdminContentCategory(key) &&
+        knownCategories.indexOf(key) === -1
+      );
     });
     if (fallbackCategories.length) {
       groups.push({
@@ -120,9 +135,9 @@ function populateCategorySelect() {
     return;
   }
 
-  // Legacy/archive categories are intentionally omitted from this selector;
-  // only the public menus, About Us policies, and real/custom home sections
-  // are valid destinations for a new item.
+  // Legacy/archive categories and the static About Us policies are
+  // intentionally omitted. Add new items only under a header menu or a
+  // real/custom homepage section.
   const groups = getContentCategoryGroups({
     includeCustom: true,
     includeFallback: false,
