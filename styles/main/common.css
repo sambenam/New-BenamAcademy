@@ -286,7 +286,7 @@ body.home-page .course-meta {
 
 /* Homepage ticker styles, scoped so other routes remain unchanged. */
 body.home-page .home-news {
-  margin: 0 3.7% 2rem 3.7%;
+  margin: 0 3.7% 1.5rem 3.7%;
   min-height: 142px;
   border: 1px solid #294462;
   border-radius: 25px;
@@ -485,7 +485,7 @@ body.home-page .home-news_item {
 
 @media (max-width: 1000px) {
 body.home-page .home-news {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 body.home-page .home-news_item {
@@ -498,7 +498,7 @@ body.home-page .home-news {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 9px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   padding: 15px 13px 28px;
   border-radius: 17px;
 }
@@ -539,4 +539,17 @@ body.home-page .home-news_item {
 body.home-page .home-news_track {
   transition: none !important;
 }
+}
+
+/* Slightly tighter vertical rhythm between homepage sections. */
+body.home-page .courses-section,
+body.home-page .featured-section,
+body.home-page .articles-section {
+  padding-top: 52px;
+  padding-bottom: 30px;
+}
+
+body.home-page .courses-section,
+body.home-page .featured-section {
+  margin-bottom: 36px;
 }

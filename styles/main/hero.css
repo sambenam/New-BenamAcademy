@@ -157,7 +157,7 @@ body.home-page .hero-section {
   background: #071321 url(/images/home-hero-reference.jpg) center 48% / cover no-repeat;
   display: flex;
   align-items: center;
-  padding: 55px 6.8% 60px;
+  padding: 55px 6.8% 48px;
   overflow: hidden;
 }
 
