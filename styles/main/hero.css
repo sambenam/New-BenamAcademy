@@ -2,19 +2,6 @@
    HERO SECTION STYLES
    ============================================ */
 
-.hero-section {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2xl);
-    margin-bottom: var(--spacing-2xl);
-    padding: var(--spacing-xl);
-    background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-    border-radius: var(--radius-xl);
-    border: 1px solid rgba(30, 64, 175, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
 .hero-section::before {
     content: "";
     position: absolute;

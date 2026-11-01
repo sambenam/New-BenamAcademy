@@ -3,6 +3,22 @@
    Dark Elegant Theme with Glassmorphism
    ============================================ */
 
+* {
+    box-sizing: border-box
+}
+
+html {
+    scroll-behavior: smooth
+}
+
+body {
+    font-family: "Vazirmatn", Tahoma, sans-serif
+}
+
+button {
+    font: inherit
+}
+
 :root {
     /* Background Colors */
     --bg-primary: #0f172a;

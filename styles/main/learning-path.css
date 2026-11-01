@@ -4,6 +4,7 @@
 
 .learning-path-section {
     margin-bottom: var(--spacing-2xl);
+    padding: 64px 3.7% 40px;
 }
 
 .learning-path {
