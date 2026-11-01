@@ -34,7 +34,8 @@
 
 .footer-logo-img {
     height: 40px;
-    filter: brightness(0) invert(1);
+    width: auto;
+    object-fit: contain;
 }
 
 .footer-desc {
