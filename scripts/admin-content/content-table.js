@@ -26,6 +26,31 @@ let contentEditorState = {
 };
 
 let contentAdminInitialized = false;
+let contentTableHasRendered = false;
+let contentTableActionsBound = false;
+
+function bindContentTableActions(container) {
+  if (!container || contentTableActionsBound) return;
+  contentTableActionsBound = true;
+
+  // Delegate from the stable container instead of attaching two handlers to
+  // every row each time the list is rebuilt.
+  container.addEventListener("click", function (event) {
+    const target = event.target;
+    if (!target || typeof target.closest !== "function") return;
+
+    const editButton = target.closest(".content-edit-btn");
+    if (editButton && container.contains(editButton)) {
+      openContentEditor(editButton.getAttribute("data-item-id"));
+      return;
+    }
+
+    const deleteButton = target.closest(".content-delete-btn");
+    if (deleteButton && container.contains(deleteButton)) {
+      deleteContentItem(deleteButton.getAttribute("data-item-id"));
+    }
+  });
+}
 
 /**
  * Update the "where should this show up?" field for the chosen category.
@@ -405,7 +430,8 @@ function initContentAdmin() {
     });
   }
 
-  renderContentTable();
+  // The content view is hidden on startup for most visits. Build its rows only
+  // when the operator first opens it, rather than blocking the dashboard.
 }
 
 /**
@@ -478,6 +504,7 @@ function renderContentTable() {
   if (!container) {
     return;
   }
+  bindContentTableActions(container);
 
   try {
     if (
@@ -507,6 +534,7 @@ function renderContentTable() {
       if (!items.length) {
         container.innerHTML =
           '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">نتیجه‌ای برای جستجوی شما پیدا نشد.</div>';
+        contentTableHasRendered = true;
         return;
       }
 
@@ -531,21 +559,8 @@ function renderContentTable() {
           })
           .join("") +
         "</div>";
+      contentTableHasRendered = true;
 
-      container
-        .querySelectorAll(".content-edit-btn")
-        .forEach(function (button) {
-          button.addEventListener("click", function () {
-            openContentEditor(button.getAttribute("data-item-id"));
-          });
-        });
-      container
-        .querySelectorAll(".content-delete-btn")
-        .forEach(function (button) {
-          button.addEventListener("click", function () {
-            deleteContentItem(button.getAttribute("data-item-id"));
-          });
-        });
       return;
     }
 
@@ -555,6 +570,8 @@ function renderContentTable() {
       includeCustom: true,
       includeFallback: true,
     });
+    const contentOverrides =
+      typeof loadContentOverrides === "function" ? loadContentOverrides() : {};
 
     let htmlContent = "";
 
@@ -588,7 +605,7 @@ function renderContentTable() {
                   id: item.id,
                   title: item.title,
                   image: item.image,
-                  hasOverride: Boolean(getContentOverride(item.id)),
+                  hasOverride: Boolean(contentOverrides[item.id]),
                   hasBlocks: hasBlocks,
                 });
               })
@@ -646,23 +663,10 @@ function renderContentTable() {
     });
 
     container.innerHTML = htmlContent;
+    contentTableHasRendered = true;
 
-    // The chevron used to be turned with inline styles on a click timer.
-    // CSS rotates it from the [open] attribute instead, so the arrow can
-    // never fall out of step with the panel it points at.
-
-    container.querySelectorAll(".content-edit-btn").forEach(function (button) {
-      button.addEventListener("click", function () {
-        openContentEditor(button.getAttribute("data-item-id"));
-      });
-    });
-    container
-      .querySelectorAll(".content-delete-btn")
-      .forEach(function (button) {
-        button.addEventListener("click", function () {
-          deleteContentItem(button.getAttribute("data-item-id"));
-        });
-      });
+    // The chevron is controlled by CSS and row actions are delegated from
+    // the stable container, so rebuilding rows installs no extra listeners.
   } catch (err) {
     console.error("Error inside renderContentTable:", err);
     container.innerHTML = `<div class="alert alert-error" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 8px;">خطا در لود دسته‌بندی‌ها: ${err.message}</div>`;

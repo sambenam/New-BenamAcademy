@@ -219,7 +219,8 @@ function switchView(viewName) {
   document.getElementById("sidebar").classList.remove("active");
   document.getElementById("overlay").classList.remove("active");
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  // Section navigation should not wait on a long scroll animation.
+  window.scrollTo({ top: 0, behavior: "auto" });
 
   // Handle Orders unread notifications
   if (viewName === "orders") {
@@ -230,8 +231,13 @@ function switchView(viewName) {
     updateOrdersNotifications();
   }
 
-  // Dynamically trigger rendering of site content if the view is active
-  if (viewName === "site-content" && typeof renderContentTable === "function") {
+  // Build the content list on first entry only. Its own add/edit/delete/search
+  // handlers refresh it when data changes, so revisiting the tab can reuse it.
+  if (
+    viewName === "site-content" &&
+    typeof renderContentTable === "function" &&
+    (typeof contentTableHasRendered === "undefined" || !contentTableHasRendered)
+  ) {
     renderContentTable();
   }
 

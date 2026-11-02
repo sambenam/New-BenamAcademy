@@ -38,7 +38,9 @@ function boot() {
     pretendToBeVisual: true,
   });
   const w = dom.window;
+  w.scrollTo = () => {};
   const store = {
+    __itemContentReads: 0,
     benamacademySession: JSON.stringify({
       token: "t",
       isAdmin: true,
@@ -47,7 +49,10 @@ function boot() {
   };
   Object.defineProperty(w, "localStorage", {
     value: {
-      getItem: (k) => (k in store ? store[k] : null),
+      getItem: (k) => {
+        if (k === "benamacademyItemContent") store.__itemContentReads++;
+        return k in store ? store[k] : null;
+      },
       setItem: (k, v) => {
         store[k] = String(v);
       },
@@ -85,7 +90,7 @@ function boot() {
   src.push(`window.__t = {
     get siteData(){ return siteData; }, findSiteItem, renderContentTable,
     deleteContentItem, openContentEditor, contentItemRow, loadDeletedItemIds,
-    isAdminContentCategory,
+    isAdminContentCategory, switchView,
   };`);
   w.eval(src.join("\n;\n"));
   w.document.dispatchEvent(new w.Event("DOMContentLoaded", { bubbles: true }));
@@ -107,8 +112,20 @@ const countData = (w) =>
   );
 
 let { w, doc, store } = boot();
-w.__t.renderContentTable();
 const box = doc.getElementById("groupedContentContainer");
+section("رندر تنبل و استفادهٔ دوباره از فهرست");
+t(
+  "فهرست تا ورود به بخش محتوا در پس‌زمینه ساخته نمی‌شود",
+  box.querySelectorAll(".content-item").length === 0,
+);
+store.__itemContentReads = 0;
+w.__t.switchView("site-content");
+t("فهرست با ورود اول ساخته می‌شود", box.querySelectorAll(".content-item").length > 0);
+t("دادهٔ override فقط یک‌بار خوانده شد", store.__itemContentReads === 1, String(store.__itemContentReads));
+const readsAfterFirstEntry = store.__itemContentReads;
+w.__t.switchView("dashboard");
+w.__t.switchView("site-content");
+t("بازگشت به محتوا رندر گران را تکرار نمی‌کند", store.__itemContentReads === readsAfterFirstEntry);
 
 // ------------------------------------------------------------ nothing lost
 section("همه آیتم‌ها هنوز نمایش داده می‌شوند");
@@ -311,6 +328,7 @@ t(
 section("جستجو");
 ({ w, doc, store } = boot());
 const search = doc.getElementById("contentTableSearch");
+store.__itemContentReads = 0;
 const anyItem = Object.entries(w.__t.siteData).find(
   ([key, category]) =>
     w.__t.isAdminContentCategory(key) && category.items && category.items.length,
@@ -319,6 +337,7 @@ search.value = anyItem.title.slice(0, 6);
 search.dispatchEvent(new w.Event("input", { bubbles: true }));
 const results = doc.querySelectorAll("#groupedContentContainer .content-item");
 t("نتیجه پیدا شد", results.length > 0, String(results.length));
+t("جستجوی آیتم‌ها overrideها را یک‌بار می‌خواند", store.__itemContentReads === 1, String(store.__itemContentReads));
 t(
   "در حالت جستجو گروه‌بندی نیست",
   doc.querySelectorAll("#groupedContentContainer .content-group").length === 0,

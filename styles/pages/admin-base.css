@@ -54,8 +54,8 @@ body {
     width: var(--sidebar-width);
     height: 100vh;
     background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(80px) saturate(180%);
-    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
     border-left: 0.5px solid rgba(255, 255, 255, 0.3);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
     display: flex;
@@ -284,8 +284,8 @@ body {
 .top-header {
     height: var(--header-height);
     background: var(--glass-bg);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
     border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;

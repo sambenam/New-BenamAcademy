@@ -213,6 +213,9 @@ function getAllSiteItems() {
   }
 
   const rows = [];
+  // Read and parse the full localStorage override blob once, not once per
+  // item. This function feeds both the admin search and the content table.
+  const overrides = loadContentOverrides();
 
   Object.keys(siteData).forEach(function (catKey) {
     const category = siteData[catKey];
@@ -227,7 +230,7 @@ function getAllSiteItems() {
         excerpt: item.excerpt || "",
         categoryKey: catKey,
         categoryTitle: category.title,
-        hasOverride: Boolean(getContentOverride(item.id)),
+        hasOverride: Boolean(overrides[item.id]),
         hasBlocks:
           typeof getContentBlocks === "function"
             ? getContentBlocks(item).length > 0
