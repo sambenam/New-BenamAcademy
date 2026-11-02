@@ -21,6 +21,10 @@ const sharedScript = fs.readFileSync(
   path.join(ROOT, "scripts/header-labels.js"),
   "utf8",
 );
+const customMenuScript = fs.readFileSync(
+  path.join(ROOT, "scripts/header-custom-menu.js"),
+  "utf8",
+);
 const fieldsSource = sharedScript.match(/const FIELDS = \[([\s\S]*?)\n  \];/)[1];
 const fieldKeys = Array.from(fieldsSource.matchAll(/key: "([^"]+)"/g), (m) => m[1]);
 const defaults = Object.fromEntries(
@@ -50,6 +54,7 @@ for (const page of PUBLIC_PAGES) {
   const labels = { ...defaults, forStudents: "دانشجویان عزیز", diploma: "دیپلم و تخصص" };
   window.localStorage.setItem("benamacademyHeaderLabels", JSON.stringify(labels));
   window.eval(sharedScript);
+  window.eval(customMenuScript);
   window.document.dispatchEvent(new window.Event("DOMContentLoaded", { bubbles: true }));
 
   check(page + " has matching desktop and mobile label keys", () => {
@@ -82,6 +87,60 @@ for (const page of PUBLIC_PAGES) {
   dom.window.close();
 }
 
+console.log("\nAdded menu items render in desktop and mobile through three levels");
+{
+  const html = fs.readFileSync(path.join(ROOT, "html/index.html"), "utf8");
+  const dom = new JSDOM(html, {
+    url: "https://example.test/html/index.html",
+    runScripts: "outside-only",
+  });
+  const { window } = dom;
+  window.eval(sharedScript);
+  window.eval(customMenuScript);
+  const items = [
+    { id: "custom-main", label: "منوی آزمایشی", href: "list-page.html?cat=custom", parentKey: "root" },
+    { id: "custom-sub", label: "زیرمنوی آزمایشی", href: "list-page.html?cat=sub", parentKey: "custom-main" },
+    { id: "custom-deep", label: "سطح سوم آزمایشی", href: "list-page.html?cat=deep", parentKey: "custom-sub" },
+    { id: "custom-student", label: "آیتم دانشجویان", href: "list-page.html?cat=student-custom", parentKey: "forStudents" },
+    { id: "custom-news", label: "زیرمنوی اخبار", href: "list-page.html?cat=news-custom", parentKey: "news" },
+    { id: "custom-diploma", label: "زیرمنوی دیپلم", href: "list-page.html?cat=diploma-custom", parentKey: "diploma" },
+  ];
+  window.BenamCustomHeaderMenu.save(items);
+
+  check("custom root appears in desktop and mobile", () => {
+    assert.strictEqual(window.document.querySelector('.home-primary-nav .custom-primary-menu > a').textContent, "منوی آزمایشی");
+    assert.strictEqual(window.document.querySelector('.mobile-header .custom-mobile-root > .custom-mobile-root-row a').textContent, "منوی آزمایشی");
+  });
+  check("third-level item is rendered and keeps its link destination", () => {
+    const desktop = window.document.querySelector('.custom-nav-entry__link[href="list-page.html?cat=deep"]');
+    const mobile = window.document.querySelector('.custom-mobile-node__link[href="list-page.html?cat=deep"]');
+    assert(desktop && mobile);
+    assert.strictEqual(desktop.textContent, "سطح سوم آزمایشی");
+  });
+  check("custom item can be added under an existing menu", () => {
+    assert(window.document.querySelector('.home-primary-nav [data-header-label="forStudents"] ~ .home-nav_dropdown .custom-menu-injection a[href="list-page.html?cat=student-custom"]'));
+    assert(window.document.querySelector('.mobile-header [data-header-label="forStudents"] ~ .mobile-dropdown-menu a[href="list-page.html?cat=student-custom"]'));
+    const desktopDiploma = window.document.querySelector('.home-primary-nav [data-header-label="diploma"]').closest('.custom-nav-existing-parent');
+    assert(desktopDiploma.querySelector('.custom-nav-submenu a[href="list-page.html?cat=diploma-custom"]'));
+    const mobileDiploma = window.document.querySelector('.mobile-header [data-header-label="diploma"]').closest('.mobile-sub-dropdown');
+    assert(mobileDiploma.querySelector('.mobile-sub_menu a[href="list-page.html?cat=diploma-custom"]'));
+  });
+  check("existing root destination remains unchanged after adding a submenu", () => {
+    assert.strictEqual(window.document.querySelector('.home-primary-nav [data-header-label="news"]').getAttribute("href"), "list-page.html?cat=exams");
+    assert.strictEqual(window.document.querySelector('.mobile-header [data-header-label="news"]').getAttribute("href"), "list-page.html?cat=exams");
+    const desktopNews = window.document.querySelector('.home-primary-nav [data-header-label="news"]');
+    assert(desktopNews.closest('.home-nav_item').querySelector('.home-nav_dropdown a[href="list-page.html?cat=news-custom"]'));
+    const newsMenu = window.document.querySelector('.mobile-header [data-header-label="news"]').closest('.mobile-dropdown');
+    assert(newsMenu.querySelector('.mobile-dropdown-menu a[href="list-page.html?cat=news-custom"]'));
+  });
+  check("unsafe script URLs are rejected", () => {
+    assert.throws(() => window.BenamCustomHeaderMenu.save([
+      { id: "bad-link", label: "خطر", href: "javascript:alert(1)", parentKey: "root" },
+    ]));
+  });
+  dom.window.close();
+}
+
 console.log("\nAdmin editor integration");
 {
   const html = fs.readFileSync(path.join(ROOT, "html/admin.html"), "utf8");
@@ -91,6 +150,7 @@ console.log("\nAdmin editor integration");
   });
   const { window } = dom;
   window.eval(sharedScript);
+  window.eval(customMenuScript);
   window.eval(fs.readFileSync(path.join(ROOT, "scripts/admin/header-menu.js"), "utf8"));
   window.document.dispatchEvent(new window.Event("DOMContentLoaded", { bubbles: true }));
 
@@ -104,6 +164,29 @@ console.log("\nAdmin editor integration");
     const groups = Array.from(window.document.querySelectorAll(".header-label-editor__group h2"), (h) => h.textContent.trim());
     assert.deepStrictEqual(groups, ["منوهای اصلی", "برای دانشجویان", "دوره‌ها", "قوانین و مقررات"]);
     assert.strictEqual(window.document.querySelectorAll("#headerLabelFields input").length, fieldKeys.length);
+  });
+  check("custom item form adds a main menu and nested items through level three", () => {
+    const addForm = window.document.getElementById("addHeaderCustomItemForm");
+    const add = (label, parentKey, href) => {
+      addForm.elements.namedItem("customMenuLabel").value = label;
+      addForm.elements.namedItem("customMenuHref").value = href;
+      addForm.elements.namedItem("customMenuParent").value = parentKey;
+      addForm.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+      return window.BenamCustomHeaderMenu.read().find((item) => item.label === label);
+    };
+    const main = add("منوی تازه", "root", "list-page.html?cat=fresh");
+    const second = add("زیرمنوی تازه", main.id, "list-page.html?cat=fresh-sub");
+    const third = add("سطح سوم تازه", second.id, "list-page.html?cat=fresh-deep");
+    assert(main && second && third);
+    assert.deepStrictEqual([main.parentKey, second.parentKey, third.parentKey], ["root", main.id, second.id]);
+    assert(!Array.from(window.document.getElementById("customMenuParent").options).some((option) => option.value === third.id));
+    const thirdLabel = window.document.querySelector(`#headerCustomItems [data-custom-field="label"][data-id="${third.id}"]`);
+    assert(thirdLabel);
+    thirdLabel.value = "ویرایش سطح سوم";
+    window.document.querySelector(`[data-custom-action="save"][data-id="${third.id}"]`).click();
+    assert.strictEqual(window.BenamCustomHeaderMenu.read().find((item) => item.id === third.id).label, "ویرایش سطح سوم");
+    window.document.querySelector(`[data-custom-action="delete"][data-id="${second.id}"]`).click();
+    assert.deepStrictEqual(Array.from(window.BenamCustomHeaderMenu.read(), (item) => item.id), [main.id]);
   });
   check("saving updates labels locally and reset restores defaults", () => {
     window.document.querySelector('#headerLabelFields input[name="diploma"]').value = "متن جدید دیپلم";

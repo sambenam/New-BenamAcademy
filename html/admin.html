@@ -96,7 +96,7 @@
         <li data-view="header-menu">
           <a href="#header-menu">
             <i class="fas fa-bars-staggered"></i>
-            <span>نام‌های منوی هدر</span>
+            <span>منوی هدر</span>
           </a>
         </li>
 
@@ -594,12 +594,12 @@
       </div>
     </div>
 
-    <!-- VIEW: HEADER MENU LABELS -->
+    <!-- VIEW: HEADER MENU -->
     <div id="view-header-menu" class="admin-view">
       <div class="dashboard-content">
         <div class="page-title">
-          <h1>نام‌های منوی هدر</h1>
-          <p>عنوان منوهای اصلی، گروه‌ها و زیرمجموعه‌های هدر دسکتاپ و موبایل را ویرایش کنید.</p>
+          <h1>منوی هدر</h1>
+          <p>نام‌های منو را ویرایش کنید و آیتم‌های جدید را به منوی اصلی یا تا سه سطح از زیرمجموعه‌ها اضافه کنید.</p>
         </div>
         <div class="alert alert-info header-label-editor__notice" role="note">
           فعلاً نام‌ها در همین مرورگر ذخیره می‌شوند. برای نمایش یکسان به همهٔ بازدیدکنندگان، اتصال API در مرحلهٔ تحویل به بک‌اند انجام می‌شود.
@@ -611,6 +611,32 @@
             <button type="button" id="resetHeaderLabelsBtn" class="btn-secondary">بازگردانی نام‌های پیش‌فرض</button>
           </div>
         </form>
+
+        <section class="header-custom-menu-manager" aria-labelledby="headerCustomMenuTitle">
+          <div class="header-custom-menu-manager__heading">
+            <h2 id="headerCustomMenuTitle">افزودن آیتم به منو</h2>
+            <p>آیتم‌ها را به منوی اصلی، هر منو یا زیرمجموعهٔ فعلی اضافه کنید و زیرمجموعه‌های بعدی را تا سطح سوم بسازید.</p>
+          </div>
+          <form id="addHeaderCustomItemForm" class="header-custom-menu-add">
+            <label class="form-group" for="customMenuLabel">
+              <span>عنوان آیتم</span>
+              <input class="form-control" id="customMenuLabel" name="customMenuLabel" maxlength="80" required />
+            </label>
+            <label class="form-group" for="customMenuHref">
+              <span>مقصد لینک</span>
+              <input class="form-control" id="customMenuHref" name="customMenuHref" maxlength="500" required dir="ltr" placeholder="list-page.html?cat=..." />
+            </label>
+            <label class="form-group" for="customMenuParent">
+              <span>محل قرارگیری</span>
+              <select class="form-control" id="customMenuParent" name="customMenuParent"></select>
+            </label>
+            <button type="submit" class="btn-primary">افزودن آیتم</button>
+          </form>
+          <div class="header-custom-menu-manager__list">
+            <h3>آیتم‌های افزوده‌شده</h3>
+            <div id="headerCustomItems"></div>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -2018,6 +2044,7 @@
   <script src="../scripts/api.js"></script>
   <script src="../scripts/app-shell.js"></script>
   <script src="../scripts/header-labels.js"></script>
+  <script src="../scripts/header-custom-menu.js"></script>
   <script src="../scripts/header-items.js"></script>
   <script src="../scripts/item-content.js"></script>
   <script src="../scripts/main-items.js"></script>
