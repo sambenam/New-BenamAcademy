@@ -242,7 +242,7 @@ section("sidebar navigation");
 const views = [...doc.querySelectorAll("[data-view]")].map((li) =>
   li.getAttribute("data-view"),
 );
-t(`${views.length} sidebar items`, views.length === 10);
+t(`${views.length} sidebar items`, views.length === 11);
 let missing = views.filter((v) => !doc.getElementById("view-" + v));
 t("every sidebar item has a view", missing.length === 0, missing.join(","));
 

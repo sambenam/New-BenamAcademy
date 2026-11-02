@@ -93,6 +93,12 @@
             <span>تنظیمات</span>
           </a>
         </li>
+        <li data-view="header-menu">
+          <a href="#header-menu">
+            <i class="fas fa-bars-staggered"></i>
+            <span>نام‌های منوی هدر</span>
+          </a>
+        </li>
 
         <li data-view="site-content">
           <a href="#site-content">
@@ -585,6 +591,26 @@
 
 
         </div>
+      </div>
+    </div>
+
+    <!-- VIEW: HEADER MENU LABELS -->
+    <div id="view-header-menu" class="admin-view">
+      <div class="dashboard-content">
+        <div class="page-title">
+          <h1>نام‌های منوی هدر</h1>
+          <p>عنوان منوهای اصلی، گروه‌ها و زیرمجموعه‌های هدر دسکتاپ و موبایل را ویرایش کنید.</p>
+        </div>
+        <div class="alert alert-info header-label-editor__notice" role="note">
+          فعلاً نام‌ها در همین مرورگر ذخیره می‌شوند. برای نمایش یکسان به همهٔ بازدیدکنندگان، اتصال API در مرحلهٔ تحویل به بک‌اند انجام می‌شود.
+        </div>
+        <form id="headerLabelsForm" class="header-label-editor">
+          <div id="headerLabelFields"></div>
+          <div class="header-label-editor__actions">
+            <button type="submit" class="btn-primary">ذخیره نام‌ها</button>
+            <button type="button" id="resetHeaderLabelsBtn" class="btn-secondary">بازگردانی نام‌های پیش‌فرض</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -1991,6 +2017,7 @@
          See the header of api.js for the two-line switch. -->
   <script src="../scripts/api.js"></script>
   <script src="../scripts/app-shell.js"></script>
+  <script src="../scripts/header-labels.js"></script>
   <script src="../scripts/header-items.js"></script>
   <script src="../scripts/item-content.js"></script>
   <script src="../scripts/main-items.js"></script>
@@ -2023,6 +2050,7 @@
   <script src="../scripts/admin/analytics.js"></script>
   <script src="../scripts/admin/modals.js"></script>
   <script src="../scripts/admin/ads.js"></script>
+  <script src="../scripts/admin/header-menu.js"></script>
   <script src="../scripts/admin/boot.js"></script>
   <script src="../scripts/up-btn.js"></script>
 </body>
