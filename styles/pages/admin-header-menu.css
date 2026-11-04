@@ -200,3 +200,81 @@
         max-width: none;
     }
 }
+
+.header-label-editor__group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.header-label-editor__group-title h2 { margin: 0; }
+
+.header-label-editor__field-with-action {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-label-editor__field-with-action > .form-group {
+    flex: 1 1 180px;
+    min-width: 0;
+    margin: 0;
+}
+
+.header-delete-action {
+    min-height: 32px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 69, 58, .3);
+    border-radius: 8px;
+    color: #ff6b63;
+    background: rgba(255, 69, 58, .08);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.header-delete-action:hover {
+    color: #fff;
+    background: #d9342b;
+}
+
+.header-label-editor__subgroup-title .header-delete-action { flex: 0 0 auto; }
+
+.header-custom-main-items {
+    grid-column: 1 / -1;
+    padding: 14px;
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-sm);
+}
+
+.header-custom-main-items > h3 {
+    margin: 0 0 10px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.header-inline-custom-tree {
+    flex: 1 0 100%;
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.header-inline-custom-tree .header-custom-item__card { padding: 10px; }
+.header-inline-custom-tree .header-custom-item__fields { grid-template-columns: minmax(0, 1fr); }
+.header-inline-custom-tree .header-custom-item__level { font-weight: 700; }
+.header-inline-custom-tree .header-custom-item__children { padding-right: 16px; }
+
+.header-custom-menu-manager__list > p { margin: 0 0 12px; color: var(--text-secondary); line-height: 1.8; }
+.header-custom-menu-manager__list > button { min-height: 40px; }
+
+@media (max-width: 600px) {
+    .header-label-editor__group-title { align-items: flex-start; flex-direction: column; }
+    .header-label-editor__field-with-action { align-items: stretch; }
+    .header-label-editor__field-with-action > .form-group { flex-basis: 100%; }
+}

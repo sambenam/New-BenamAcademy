@@ -3,10 +3,19 @@
   "use strict";
 
   const STORAGE_KEY = "benamacademyHeaderCustomItems";
+  const HIDDEN_KEY = "benamacademyHeaderHiddenItems";
   const ROOT = "root";
   const MAX_DEPTH = 3;
   const MAX_ITEMS = 150;
   const NONLINK_LABEL_KEYS = new Set(["studentsBooks", "studentsExamGroup", "studentsProjects"]);
+  const STATIC_DESCENDANTS = {
+    forStudents: ["studentsBooks", "diploma", "associate_degree", "bachelor", "master", "phd", "studentsExamGroup", "konkur1", "konkur2", "konkur3", "studentsProjects", "Enterpreneurship_projects", "Enternship-projects", "Financial-project", "allForStudents"],
+    courses: ["allCourses", "beginner", "intermediate", "advanced", "videos"],
+    regulations: ["allRegulations", "constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"],
+    studentsBooks: ["diploma", "associate_degree", "bachelor", "master", "phd"],
+    studentsExamGroup: ["konkur1", "konkur2", "konkur3"],
+    studentsProjects: ["Enterpreneurship_projects", "Enternship-projects", "Financial-project"],
+  };
   const BUILTIN_MENUS = [
     { key: "forStudents", fallback: "برای دانشجویان" },
     { key: "courses", fallback: "دوره‌ها" },
@@ -15,15 +24,13 @@
     { key: "aboutUs", fallback: "درباره ما" },
   ];
 
-  function builtInSubmenuFields() {
+  function staticParentFields() {
     const fields = window.BenamHeaderLabels ? window.BenamHeaderLabels.fields : [];
-    return fields.filter((field) =>
-      !BUILTIN_MENUS.some((menu) => menu.key === field.key) && !NONLINK_LABEL_KEYS.has(field.key),
-    );
+    return fields.filter((field) => !BUILTIN_MENUS.some((menu) => menu.key === field.key));
   }
 
   function isBuiltInSubmenuKey(key) {
-    return builtInSubmenuFields().some((field) => field.key === key);
+    return staticParentFields().some((field) => field.key === key);
   }
 
   function cleanHref(value) {
@@ -46,10 +53,13 @@
       if (!entry || typeof entry !== "object") return;
       const id = String(entry.id || "").slice(0, 80);
       const label = String(entry.label || "").trim().slice(0, 80);
-      const href = cleanHref(entry.href);
       const parentKey = String(entry.parentKey || "");
-      if (!id || !/^[\w-]+$/.test(id) || !label || !href || !parentKey || unique.has(id)) return;
-      unique.set(id, { id, label, href, parentKey });
+      const kind = ["menu", "group", "link"].includes(entry.kind)
+        ? entry.kind
+        : (parentKey === ROOT ? "menu" : "link");
+      const href = kind === "group" ? "" : cleanHref(entry.href);
+      if (!id || !/^[\w-]+$/.test(id) || !label || (kind !== "group" && !href) || !parentKey || unique.has(id)) return;
+      unique.set(id, { id, label, href, parentKey, kind });
     });
 
     const depths = new Map();
@@ -80,6 +90,68 @@
     } catch (error) {
       return [];
     }
+  }
+
+  function readHidden() {
+    try {
+      const value = JSON.parse(localStorage.getItem(HIDDEN_KEY) || "[]");
+      return Array.isArray(value) ? value.filter((key) => typeof key === "string") : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function isHidden(key) {
+    const hidden = new Set(readHidden());
+    if (hidden.has(key)) return true;
+    return Array.from(hidden).some((hiddenKey) => (STATIC_DESCENDANTS[hiddenKey] || []).includes(key));
+  }
+
+  function itemIsHidden(item, items) {
+    let parentKey = item.parentKey;
+    let remaining = MAX_DEPTH + 1;
+    while (parentKey && remaining-- > 0) {
+      if (parentKey === ROOT) return false;
+      if (isHidden(parentKey)) return true;
+      const parent = items.find((candidate) => candidate.id === parentKey);
+      if (!parent) return false;
+      parentKey = parent.parentKey;
+    }
+    return false;
+  }
+
+  function removeChildren(items, parentKey) {
+    const removedIds = new Set();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      items.forEach((item) => {
+        if ((item.parentKey === parentKey || removedIds.has(item.parentKey)) && !removedIds.has(item.id)) {
+          removedIds.add(item.id);
+          changed = true;
+        }
+      });
+    }
+    return items.filter((item) => !removedIds.has(item.id));
+  }
+
+  function hideStatic(key) {
+    const hidden = new Set(readHidden());
+    hidden.add(key);
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hidden)));
+    let items = read();
+    [key, ...(STATIC_DESCENDANTS[key] || [])].forEach((parentKey) => {
+      items = removeChildren(items, parentKey);
+    });
+    save(items);
+    announce(read());
+    return Array.from(hidden);
+  }
+
+  function restoreStructure() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(HIDDEN_KEY);
+    announce([]);
   }
 
   function announce(items) {
@@ -124,7 +196,7 @@
   }
 
   function descendants(items, parentKey) {
-    return items.filter((item) => item.parentKey === parentKey);
+    return items.filter((item) => item.parentKey === parentKey && !itemIsHidden(item, items));
   }
 
   function itemDepth(item, items) {
@@ -137,33 +209,52 @@
   }
 
   function getParentOptions() {
-    const items = read();
+    const items = read().filter((item) => !itemIsHidden(item, read()));
     const labels = window.BenamHeaderLabels ? window.BenamHeaderLabels.read() : {};
-    const options = [{ key: ROOT, label: "منوی اصلی — قبل از درباره ما", depth: 0 }];
+    const options = [{ key: ROOT, label: "منوی اصلی", action: "بعد از قوانین و مقررات", depth: 0, kind: "menu" }];
     BUILTIN_MENUS.forEach((menu) => {
-      options.push({ key: menu.key, label: labels[menu.key] || menu.fallback, depth: 1 });
+      if (!isHidden(menu.key)) options.push({ key: menu.key, label: labels[menu.key] || menu.fallback, action: "افزودن عنوان", depth: 1, kind: "group" });
     });
-    builtInSubmenuFields().forEach((field) => {
+    const staticParents = window.BenamHeaderLabels
+      ? window.BenamHeaderLabels.fields.filter((field) => !BUILTIN_MENUS.some((menu) => menu.key === field.key))
+      : [];
+    staticParents.forEach((field) => {
+      if (isHidden(field.key)) return;
       options.push({
         key: field.key,
         label: (labels[field.group] || field.group) + " ← " + (labels[field.key] || field.value),
+        action: "افزودن زیرگروه",
         depth: 2,
+        kind: "link",
       });
     });
     const pathFor = (item) => {
       const parent = items.find((candidate) => candidate.id === item.parentKey);
       if (parent) return pathFor(parent) + " ← " + item.label;
-      const submenu = builtInSubmenuFields().find((field) => field.key === item.parentKey);
+      const submenu = staticParents.find((field) => field.key === item.parentKey);
       if (submenu) return (labels[submenu.group] || submenu.group) + " ← " + (labels[submenu.key] || submenu.value) + " ← " + item.label;
       const builtin = BUILTIN_MENUS.find((menu) => menu.key === item.parentKey);
       return (builtin ? (labels[builtin.key] || builtin.fallback) + " ← " : "") + item.label;
     };
     items
-      .filter((item) => itemDepth(item, items) < MAX_DEPTH)
+      .filter((item) => !itemIsHidden(item, items) && itemDepth(item, items) < MAX_DEPTH)
       .forEach((item) => {
-        options.push({ key: item.id, label: pathFor(item), depth: itemDepth(item, items) });
+        options.push({
+          key: item.id,
+          label: pathFor(item),
+          action: item.kind === "menu" ? "افزودن عنوان" : "افزودن زیرگروه",
+          depth: itemDepth(item, items),
+          kind: item.kind === "menu" ? "group" : "link",
+        });
       });
     return options;
+  }
+
+  function kindForParent(parentKey, items) {
+    if (parentKey === ROOT) return "menu";
+    if (BUILTIN_MENUS.some((menu) => menu.key === parentKey)) return "group";
+    const parent = (items || read()).find((item) => item.id === parentKey);
+    return parent && parent.kind === "menu" ? "group" : "link";
   }
 
   function makeAnchor(label, href, className) {
@@ -175,10 +266,20 @@
   }
 
   function makeDesktopNode(item, items) {
+    const children = descendants(items, item.id);
+    if (item.kind === "group") {
+      const group = document.createElement("section");
+      group.className = "custom-nav-group";
+      const heading = document.createElement("strong");
+      heading.textContent = item.label;
+      group.appendChild(heading);
+      children.forEach((child) => group.appendChild(makeDesktopNode(child, items)));
+      return group;
+    }
+
     const wrapper = document.createElement("div");
     wrapper.className = "custom-nav-entry";
     wrapper.appendChild(makeAnchor(item.label, item.href, "custom-nav-entry__link"));
-    const children = descendants(items, item.id);
     if (children.length) {
       const toggle = document.createElement("button");
       toggle.type = "button";
@@ -270,15 +371,27 @@
         dropdown.appendChild(section);
         menuItem.appendChild(dropdown);
       }
-      const aboutLink = getDesktopRootLink(nav, "aboutUs");
-      const beforeAbout = aboutLink ? (aboutLink.closest(".home-nav_item") || aboutLink) : null;
-      if (beforeAbout) nav.insertBefore(menuItem, beforeAbout);
+      const followingLink = getDesktopRootLink(nav, "news") || getDesktopRootLink(nav, "aboutUs");
+      const insertBefore = followingLink ? (followingLink.closest(".home-nav_item") || followingLink) : null;
+      if (insertBefore) nav.insertBefore(menuItem, insertBefore);
       else nav.appendChild(menuItem);
     });
 
-    builtInSubmenuFields().forEach((field) => {
+    staticParentFields().forEach((field) => {
       const children = descendants(items, field.key);
       if (!children.length) return;
+      if (NONLINK_LABEL_KEYS.has(field.key)) {
+        const heading = Array.from(nav.querySelectorAll("strong[data-header-label]")).find(
+          (node) => node.getAttribute("data-header-label") === field.key,
+        );
+        const section = heading && heading.closest("section");
+        if (section) children.forEach((child) => {
+          const generated = makeDesktopNode(child, items);
+          generated.classList.add("custom-menu-injection");
+          section.appendChild(generated);
+        });
+        return;
+      }
       const anchor = Array.from(nav.querySelectorAll("a[data-header-label]")).find(
         (node) => node.getAttribute("data-header-label") === field.key,
       );
@@ -323,8 +436,15 @@
     li.className = "mobile-sub-dropdown custom-mobile-node custom-mobile-generated";
     const row = document.createElement("div");
     row.className = "custom-mobile-node__row";
-    row.appendChild(makeAnchor(item.label, item.href, "custom-mobile-node__link"));
     const children = descendants(items, item.id);
+    if (item.kind === "group") {
+      const heading = document.createElement("strong");
+      heading.className = "custom-mobile-group__title";
+      heading.textContent = item.label;
+      row.appendChild(heading);
+    } else {
+      row.appendChild(makeAnchor(item.label, item.href, "custom-mobile-node__link"));
+    }
     if (children.length) {
       const toggle = document.createElement("button");
       toggle.type = "button";
@@ -415,6 +535,22 @@
   }
 
   function appendMobileStaticChildren(root, field, children, items) {
+    if (NONLINK_LABEL_KEYS.has(field.key)) {
+      const rootMenu = BUILTIN_MENUS.find((menu) => menu.fallback === field.group);
+      const host = rootMenu && findMobileRoot(root, rootMenu.key)?.querySelector(":scope > .mobile-dropdown-menu");
+      if (!host) return;
+      const labels = window.BenamHeaderLabels ? window.BenamHeaderLabels.read() : {};
+      const node = makeMobileNode({ id: field.key, label: labels[field.key] || field.value, kind: "group" }, items);
+      const descendantsKeys = STATIC_DESCENDANTS[field.key] || [];
+      const lastStatic = descendantsKeys.map((key) =>
+        Array.from(root.querySelectorAll("[data-header-label]")).find((entry) => entry.getAttribute("data-header-label") === key),
+      ).filter(Boolean).pop();
+      const lastItem = lastStatic && lastStatic.closest(".mobile-sub-dropdown");
+      if (lastItem && lastItem.parentElement === host) lastItem.after(node);
+      else host.appendChild(node);
+      return;
+    }
+
     const anchor = Array.from(root.querySelectorAll("a[data-header-label]")).find(
       (node) => node.getAttribute("data-header-label") === field.key,
     );
@@ -449,7 +585,7 @@
       const children = descendants(items, menu.key);
       if (children.length) appendMobileChildren(root, menu.key, children, items);
     });
-    builtInSubmenuFields().forEach((field) => {
+    staticParentFields().forEach((field) => {
       const children = descendants(items, field.key);
       if (children.length) appendMobileStaticChildren(root, field, children, items);
     });
@@ -478,9 +614,63 @@
         li.appendChild(menu);
       }
       const menuList = root.querySelector(".mobile-menu_list");
-      const aboutItem = findMobileRoot(root, "aboutUs");
-      if (menuList && aboutItem) menuList.insertBefore(li, aboutItem);
+      const followingItem = findMobileRoot(root, "news") || findMobileRoot(root, "aboutUs");
+      if (menuList && followingItem) menuList.insertBefore(li, followingItem);
       else if (menuList) menuList.appendChild(li);
+    });
+  }
+
+  function applyHidden(host) {
+    const nav = host.querySelector(".home-primary-nav");
+    const mobile = host.querySelector(".mobile-header");
+    if (nav) {
+      nav.querySelectorAll("[data-header-label], .home-nav_item, .home-nav_dropdown section").forEach((node) => { node.hidden = false; });
+    }
+    if (mobile) {
+      mobile.querySelectorAll("[data-header-label], .mobile-dropdown, .mobile-sub-dropdown").forEach((node) => { node.hidden = false; });
+    }
+
+    const labelsApi = window.BenamHeaderLabels;
+    const keys = labelsApi ? labelsApi.fields.map((field) => field.key) : [];
+    keys.forEach((key) => {
+      if (!isHidden(key)) return;
+      if (NONLINK_LABEL_KEYS.has(key)) {
+        if (nav) {
+          const heading = Array.from(nav.querySelectorAll("strong[data-header-label]")).find((node) => node.getAttribute("data-header-label") === key);
+          const section = heading && heading.closest("section");
+          if (section) section.hidden = true;
+        }
+      }
+      (STATIC_DESCENDANTS[key] || []).forEach((childKey) => {
+        if (mobile) Array.from(mobile.querySelectorAll("[data-header-label]")).filter((node) => node.getAttribute("data-header-label") === childKey).forEach((node) => {
+          const item = node.closest(".mobile-sub-dropdown");
+          if (item) item.hidden = true;
+        });
+      });
+      const desktopNodes = nav ? Array.from(nav.querySelectorAll("[data-header-label]")).filter((node) => node.getAttribute("data-header-label") === key) : [];
+      desktopNodes.forEach((node) => {
+        if (BUILTIN_MENUS.some((menu) => menu.key === key)) {
+          const item = node.closest(".home-nav_item") || node;
+          item.hidden = true;
+        } else if (!NONLINK_LABEL_KEYS.has(key)) {
+          const wrapper = node.closest(".custom-nav-existing-parent");
+          if (wrapper) wrapper.hidden = true;
+          else node.hidden = true;
+        }
+      });
+      if (mobile) {
+        const mobileNodes = Array.from(mobile.querySelectorAll("[data-header-label]")).filter((node) => node.getAttribute("data-header-label") === key);
+        mobileNodes.forEach((node) => {
+          if (BUILTIN_MENUS.some((menu) => menu.key === key)) {
+            const item = node.closest(".mobile-dropdown") || node;
+            item.hidden = true;
+          } else if (!NONLINK_LABEL_KEYS.has(key)) {
+            const item = node.closest(".mobile-sub-dropdown");
+            if (item) item.hidden = true;
+            else node.hidden = true;
+          }
+        });
+      }
     });
   }
 
@@ -489,6 +679,7 @@
     const items = read();
     renderDesktop(host.querySelector(".home-primary-nav"), items);
     renderMobile(host.querySelector(".mobile-header"), items);
+    applyHidden(host);
     return items;
   }
 
@@ -501,12 +692,18 @@
     save,
     createId: makeId,
     createHref,
+    kindForParent,
     parentOptions: getParentOptions,
+    isHidden,
+    hiddenKeys: readHidden,
+    hideStatic,
+    restoreStructure,
+    removeChildren,
     apply,
   };
 
   window.addEventListener("storage", (event) => {
-    if (event.key === STORAGE_KEY) apply(document);
+    if (event.key === STORAGE_KEY || event.key === HIDDEN_KEY) apply(document);
   });
   window.addEventListener("benam:header-custom-menu-changed", () => apply(document));
   window.addEventListener("benam:header-labels-changed", () => apply(document));

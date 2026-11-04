@@ -104,6 +104,8 @@ console.log("\nAdded menu items render in desktop and mobile through three level
     { id: "custom-student", label: "آیتم دانشجویان", href: "list-page.html?cat=student-custom", parentKey: "forStudents" },
     { id: "custom-news", label: "زیرمنوی اخبار", href: "list-page.html?cat=news-custom", parentKey: "news" },
     { id: "custom-diploma", label: "زیرمنوی دیپلم", href: "list-page.html?cat=diploma-custom", parentKey: "diploma" },
+    { id: "custom-student-group", kind: "group", label: "عنوان افزوده دانشجویان", href: "", parentKey: "forStudents" },
+    { id: "custom-student-group-link", kind: "link", label: "آیتم عنوان افزوده", href: "list-page.html?cat=student-group-item", parentKey: "custom-student-group" }
   ];
   window.BenamCustomHeaderMenu.save(items);
 
@@ -113,9 +115,19 @@ console.log("\nAdded menu items render in desktop and mobile through three level
     const desktopOrder = Array.from(window.document.querySelector('.home-primary-nav').children);
     const aboutLink = window.document.querySelector('.home-primary-nav [data-header-label="aboutUs"]');
     const aboutDesktop = aboutLink.closest('.home-nav_item') || aboutLink;
-    assert(desktopOrder.indexOf(window.document.querySelector('.home-primary-nav .custom-primary-menu')) < desktopOrder.indexOf(aboutDesktop));
+    const customMain = window.document.querySelector('.home-primary-nav .custom-primary-menu');
+    const regulationsLink = window.document.querySelector('.home-primary-nav [data-header-label="regulations"]');
+    const newsLink = window.document.querySelector('.home-primary-nav [data-header-label="news"]');
+    const newsDesktop = newsLink.closest('.home-nav_item') || newsLink;
+    assert(desktopOrder.indexOf(customMain) > desktopOrder.indexOf(regulationsLink.closest('.home-nav_item')));
+    assert(desktopOrder.indexOf(customMain) < desktopOrder.indexOf(newsDesktop));
+    assert(desktopOrder.indexOf(customMain) < desktopOrder.indexOf(aboutDesktop));
     const mobileOrder = Array.from(window.document.querySelector('.mobile-header .mobile-menu_list').children);
-    assert(mobileOrder.indexOf(window.document.querySelector('.mobile-header .custom-mobile-root')) < mobileOrder.indexOf(window.document.querySelector('.mobile-header [data-header-label="aboutUs"]').closest('.mobile-dropdown')));
+    const customMobileMain = window.document.querySelector('.mobile-header .custom-mobile-root');
+    const mobileRegulations = window.document.querySelector('.mobile-header [data-header-label="regulations"]').closest('.mobile-dropdown');
+    const mobileNews = window.document.querySelector('.mobile-header [data-header-label="news"]').closest('.mobile-dropdown');
+    assert(mobileOrder.indexOf(customMobileMain) > mobileOrder.indexOf(mobileRegulations));
+    assert(mobileOrder.indexOf(customMobileMain) < mobileOrder.indexOf(mobileNews));
   });
   check("third-level item is rendered and keeps its link destination", () => {
     const desktop = window.document.querySelector('.custom-nav-entry__link[href="list-page.html?cat=deep"]');
@@ -131,6 +143,14 @@ console.log("\nAdded menu items render in desktop and mobile through three level
     const mobileDiploma = window.document.querySelector('.mobile-header [data-header-label="diploma"]').closest('.mobile-sub-dropdown');
     assert(mobileDiploma.querySelector('.mobile-sub_menu a[href="list-page.html?cat=diploma-custom"]'));
   });
+  check("custom title groups and their links render on both layouts", () => {
+    const heading = Array.from(window.document.querySelectorAll('.home-primary-nav .home-nav_dropdown strong')).find((node) => node.textContent === "عنوان افزوده دانشجویان");
+    assert(heading);
+    assert(heading.closest("section").querySelector('a[href="list-page.html?cat=student-group-item"]'));
+    const mobileTitle = Array.from(window.document.querySelectorAll('.mobile-header .custom-mobile-group__title')).find((node) => node.textContent === "عنوان افزوده دانشجویان");
+    assert(mobileTitle);
+    assert(mobileTitle.closest("li").querySelector('a[href="list-page.html?cat=student-group-item"]'));
+  });
   check("existing root destination remains unchanged after adding a submenu", () => {
     assert.strictEqual(window.document.querySelector('.home-primary-nav [data-header-label="news"]').getAttribute("href"), "list-page.html?cat=exams");
     assert.strictEqual(window.document.querySelector('.mobile-header [data-header-label="news"]').getAttribute("href"), "list-page.html?cat=exams");
@@ -144,6 +164,17 @@ console.log("\nAdded menu items render in desktop and mobile through three level
       { id: "bad-link", label: "خطر", href: "javascript:alert(1)", parentKey: "root" },
     ]));
   });
+  check("deleting a static title/root hides its descendants and can be restored", () => {
+    window.BenamCustomHeaderMenu.hideStatic("studentsBooks");
+    const staticBookGroup = window.document.querySelector('.home-primary-nav strong[data-header-label="studentsBooks"]').closest("section");
+    assert.strictEqual(staticBookGroup.hidden, true);
+    assert.strictEqual(window.document.querySelector('.mobile-header [data-header-label="diploma"]').closest(".mobile-sub-dropdown").hidden, true);
+    window.BenamCustomHeaderMenu.restoreStructure();
+    window.BenamCustomHeaderMenu.hideStatic("forStudents");
+    assert.strictEqual(window.document.querySelector('.home-primary-nav [data-header-label="forStudents"]').closest(".home-nav_item").hidden, true);
+    assert.strictEqual(window.document.querySelector('.mobile-header [data-header-label="forStudents"]').closest(".mobile-dropdown").hidden, true);
+    window.BenamCustomHeaderMenu.restoreStructure();
+  });
   dom.window.close();
 }
 
@@ -155,6 +186,7 @@ console.log("\nAdmin editor integration");
     runScripts: "outside-only",
   });
   const { window } = dom;
+  window.confirm = () => true;
   window.eval(sharedScript);
   window.eval(customMenuScript);
   window.eval(fs.readFileSync(path.join(ROOT, "scripts/admin/header-menu.js"), "utf8"));
@@ -166,7 +198,7 @@ console.log("\nAdmin editor integration");
     assert(window.document.getElementById("headerLabelsForm"));
     assert(window.document.getElementById("resetHeaderLabelsBtn"));
     assert(window.document.getElementById("customMenuHref") === null);
-    assert(window.document.getElementById("customMenuParent").options[0].textContent.includes("قبل از درباره ما"));
+    assert(window.document.getElementById("customMenuParent").options[0].textContent.includes("بعد از قوانین و مقررات"));
   });
   check("editor presents exactly the four header groups", () => {
     const groups = Array.from(window.document.querySelectorAll(".header-label-editor__group h2"), (h) => h.textContent.trim());
@@ -189,12 +221,12 @@ console.log("\nAdmin editor integration");
     const second = add("زیرمنوی تازه", main.id);
     const third = add("سطح سوم تازه", second.id);
     assert(main && second && third);
-    assert.strictEqual(window.document.querySelector('#headerCustomItems input[data-custom-field="href"]'), null);
+    assert.strictEqual(window.document.querySelector('#view-header-menu input[data-custom-field="href"]'), null);
     assert.deepStrictEqual([main.parentKey, second.parentKey, third.parentKey], ["root", main.id, second.id]);
     assert.strictEqual(new URL(main.href, window.location.href).searchParams.get("cat"), "custom-منوی-تازه");
     assert(!Array.from(window.document.getElementById("customMenuParent").options).some((option) => option.value === third.id));
     const thirdHref = third.href;
-    const thirdLabel = window.document.querySelector(`#headerCustomItems [data-custom-field="label"][data-id="${third.id}"]`);
+    const thirdLabel = window.document.querySelector(`#view-header-menu [data-custom-field="label"][data-id="${third.id}"]`);
     assert(thirdLabel);
     thirdLabel.value = "ویرایش سطح سوم";
     window.document.querySelector(`[data-custom-action="save"][data-id="${third.id}"]`).click();
@@ -203,6 +235,32 @@ console.log("\nAdmin editor integration");
     assert.strictEqual(renamedThird.href, thirdHref);
     window.document.querySelector(`[data-custom-action="delete"][data-id="${second.id}"]`).click();
     assert.deepStrictEqual(Array.from(window.BenamCustomHeaderMenu.read(), (item) => item.id), [main.id]);
+
+    const studentTitle = add("عنوان چهارم دانشجویان", "forStudents");
+    const studentLink = add("آیتم زیر عنوان چهارم", studentTitle.id);
+    assert.strictEqual(studentTitle.kind, "group");
+    assert.strictEqual(studentTitle.href, "");
+    assert.strictEqual(studentLink.kind, "link");
+    assert(window.document.querySelector(`#view-header-menu [data-custom-field="label"][data-id="${studentTitle.id}"]`));
+    window.document.querySelector(`[data-custom-action="delete"][data-id="${studentTitle.id}"]`).click();
+    assert(!window.BenamCustomHeaderMenu.read().some((item) => item.id === studentTitle.id || item.id === studentLink.id));
+
+    window.document.querySelector('[data-static-delete="studentsBooks"]').click();
+    assert(window.BenamCustomHeaderMenu.isHidden("studentsBooks"));
+    assert(window.BenamCustomHeaderMenu.isHidden("diploma"));
+    assert.strictEqual(window.document.querySelector('#headerLabelFields [name="studentsBooks"]'), null);
+    window.document.querySelector('#headerLabelFields [name="courses"]').value = "دوره‌های ویرایش‌شده";
+    window.document.getElementById("headerLabelsForm").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    assert.strictEqual(window.BenamHeaderLabels.read().studentsBooks, defaults.studentsBooks);
+    window.document.getElementById("restoreHeaderStructureBtn").click();
+    assert(!window.BenamCustomHeaderMenu.isHidden("studentsBooks"));
+    assert(window.document.querySelector('#headerLabelFields [name="studentsBooks"]'));
+
+    window.document.querySelector('[data-static-delete="forStudents"]').click();
+    assert(window.BenamCustomHeaderMenu.isHidden("forStudents"));
+    assert.strictEqual(window.document.querySelector('[data-header-section="forStudents"]'), null);
+    window.document.getElementById("restoreHeaderStructureBtn").click();
+    assert(!window.BenamCustomHeaderMenu.isHidden("forStudents"));
   });
   check("saving updates labels locally and reset restores defaults", () => {
     window.document.querySelector('#headerLabelFields input[name="diploma"]').value = "متن جدید دیپلم";

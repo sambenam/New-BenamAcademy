@@ -15,24 +15,38 @@
 
   function renderFields() {
     const api = window.BenamHeaderLabels;
+    const menuApi = window.BenamCustomHeaderMenu;
     const host = document.getElementById("headerLabelFields");
     if (!api || !host) return;
 
     const current = api.read();
+    const items = menuApi ? menuApi.read() : [];
     const byKey = new Map(api.fields.map((field) => [field.key, field]));
-    const input = (key) => {
+    const visible = (key) => !menuApi || !menuApi.isHidden(key);
+    const dynamicChildren = (key, depth) => {
+      const tree = renderTree(items, key, depth);
+      return tree ? `<ul class="header-inline-custom-tree">${tree}</ul>` : "";
+    };
+    const input = (key, deleteKind, includeChildren) => {
+      if (!visible(key)) return "";
       const field = byKey.get(key);
+      const title = deleteKind === "main" ? "حذف کل منو" : "حذف آیتم";
       return `
-        <label class="form-group" for="header-label-${escapeHtml(field.key)}">
-          <span>${escapeHtml(field.label)}</span>
-          <input class="form-control" id="header-label-${escapeHtml(field.key)}"
-            name="${escapeHtml(field.key)}" maxlength="80" required
-            value="${escapeHtml(current[field.key] || field.value)}" />
-        </label>
+        <div class="header-label-editor__field-with-action">
+          <label class="form-group" for="header-label-${escapeHtml(field.key)}">
+            <span>${escapeHtml(field.label)}</span>
+            <input class="form-control" id="header-label-${escapeHtml(field.key)}"
+              name="${escapeHtml(field.key)}" maxlength="80" required
+              value="${escapeHtml(current[field.key] || field.value)}" />
+          </label>
+          ${deleteKind ? `<button type="button" class="header-delete-action" data-static-delete="${escapeHtml(field.key)}" data-delete-kind="${escapeHtml(deleteKind)}">${title}</button>` : ""}
+          ${includeChildren === false ? "" : dynamicChildren(field.key, 3)}
+        </div>
       `;
     };
-    const fields = (keys) => `<div class="header-label-editor__fields">${keys.map(input).join("")}</div>`;
+    const fields = (keys, kind, includeChildren) => `<div class="header-label-editor__fields">${keys.map((key) => input(key, kind, includeChildren)).join("")}</div>`;
     const subgroup = (titleKey, title, childKeys) => {
+      if (!visible(titleKey)) return "";
       const field = byKey.get(titleKey);
       return `
         <section class="header-label-editor__subgroup">
@@ -41,28 +55,53 @@
             <input class="form-control" id="header-label-${escapeHtml(field.key)}"
               name="${escapeHtml(field.key)}" maxlength="80" required
               value="${escapeHtml(current[field.key] || field.value)}" />
+            <button type="button" class="header-delete-action" data-static-delete="${escapeHtml(field.key)}" data-delete-kind="title">حذف عنوان</button>
           </div>
-          ${fields(childKeys)}
+          ${fields(childKeys, "item")}
+          ${dynamicChildren(titleKey, 3)}
         </section>
       `;
     };
-    const section = (name, body) => `
-      <section class="header-label-editor__group">
-        <h2>${escapeHtml(name)}</h2>
-        ${body}
-      </section>
-    `;
+    const section = (key, fallback, body) => {
+      if (key && !visible(key)) return "";
+      const title = key ? (current[key] || fallback) + ":" : fallback;
+      return `
+        <section class="header-label-editor__group" ${key ? `data-header-section="${escapeHtml(key)}"` : ""}>
+          <div class="header-label-editor__group-title">
+            <h2>${escapeHtml(title)}</h2>
+            ${key ? `<button type="button" class="header-delete-action" data-static-delete="${escapeHtml(key)}" data-delete-kind="main">حذف کل منو</button>` : ""}
+          </div>
+          ${body}
+        </section>
+      `;
+    };
+
+    const customMain = dynamicChildren("root", 1);
+    const studentGroups = [
+      subgroup("studentsBooks", "عنوان زیرگروه اول", ["diploma", "associate_degree", "bachelor", "master", "phd"]),
+      subgroup("studentsExamGroup", "عنوان زیرگروه دوم", ["konkur1", "konkur2", "konkur3"]),
+      subgroup("studentsProjects", "عنوان زیرگروه سوم", ["Enterpreneurship_projects", "Enternship-projects", "Financial-project"]),
+      dynamicChildren("forStudents", 2),
+      `<section class="header-label-editor__subgroup header-label-editor__subgroup--mobile"><h3>گزینهٔ موبایل:</h3>${fields(["allForStudents"], "item")}</section>`,
+    ].join("");
 
     host.innerHTML = [
-      section("منوهای اصلی", fields(["forStudents", "courses", "regulations", "news", "aboutUs"])),
-      section(current.forStudents + ":", [
-        subgroup("studentsBooks", "عنوان زیرگروه اول", ["diploma", "associate_degree", "bachelor", "master", "phd"]),
-        subgroup("studentsExamGroup", "عنوان زیرگروه دوم", ["konkur1", "konkur2", "konkur3"]),
-        subgroup("studentsProjects", "عنوان زیرگروه سوم", ["Enterpreneurship_projects", "Enternship-projects", "Financial-project"]),
-        `<section class="header-label-editor__subgroup header-label-editor__subgroup--mobile"><h3>گزینهٔ موبایل:</h3>${fields(["allForStudents"])}</section>`,
+      section(null, "منوهای اصلی", [
+        fields(["forStudents", "courses", "regulations"], null, false),
+        customMain ? `<div class="header-custom-main-items"><h3>منوهای افزوده‌شده (پس از قوانین و مقررات)</h3>${customMain}</div>` : "",
+        fields(["news", "aboutUs"], "main", false),
+        dynamicChildren("news", 2),
+        dynamicChildren("aboutUs", 2),
       ].join("")),
-      section(current.courses + ":", fields(["allCourses", "beginner", "intermediate", "advanced", "videos"])),
-      section(current.regulations + ":", fields(["allRegulations", "constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"])),
+      section("forStudents", current.forStudents, studentGroups),
+      section("courses", current.courses, [
+        fields(["allCourses", "beginner", "intermediate", "advanced", "videos"], "item"),
+        dynamicChildren("courses", 2),
+      ].join("")),
+      section("regulations", current.regulations, [
+        fields(["allRegulations", "constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"], "item"),
+        dynamicChildren("regulations", 2),
+      ].join("")),
     ].join("");
   }
 
@@ -72,30 +111,36 @@
     if (!api || !select) return;
     const previous = select.value;
     select.innerHTML = api.parentOptions().map((option) => `
-      <option value="${escapeHtml(option.key)}">${"　".repeat(option.depth)}${escapeHtml(option.label)}</option>
+      <option value="${escapeHtml(option.key)}">${"　".repeat(option.depth)}${escapeHtml(option.label)} — ${escapeHtml(option.action || "افزودن زیرگروه")}</option>
     `).join("");
     if (Array.from(select.options).some((option) => option.value === previous)) select.value = previous;
   }
 
   function renderTree(items, parentKey, depth) {
     const api = window.BenamCustomHeaderMenu;
-    return items.filter((item) => item.parentKey === parentKey).map((item) => {
+    return items.filter((item) => item.parentKey === parentKey && !api.isHidden(item.parentKey)).map((item) => {
       const parent = api.parentOptions().find((option) => option.key === item.parentKey);
+      const deletion = item.kind === "menu"
+        ? "حذف کل منو و زیرمجموعه‌ها"
+        : item.kind === "group"
+          ? "حذف عنوان و زیرگروه‌ها"
+          : "حذف زیرگروه";
+      const itemType = item.kind === "menu" ? "منوی اصلی" : item.kind === "group" ? "عنوان" : "زیرگروه";
       return `
-        <li class="header-custom-item" data-depth="${depth}">
+        <li class="header-custom-item header-custom-item--${escapeHtml(item.kind)}" data-depth="${depth}">
           <div class="header-custom-item__card">
-            <div class="header-custom-item__level">سطح ${depth} · ${escapeHtml(item.label)}</div>
+            <div class="header-custom-item__level">${itemType} · سطح ${depth}</div>
             <div class="header-custom-item__placement">محل قرارگیری: ${escapeHtml(parent ? parent.label : "منوی هدر")}</div>
             <div class="header-custom-item__fields">
               <label class="form-group">
-                <span>عنوان آیتم</span>
+                <span>عنوان</span>
                 <input class="form-control" data-custom-field="label" data-id="${escapeHtml(item.id)}"
                   maxlength="80" required value="${escapeHtml(item.label)}" />
               </label>
             </div>
             <div class="header-custom-item__actions">
               <button type="button" class="btn-primary" data-custom-action="save" data-id="${escapeHtml(item.id)}">ذخیره عنوان</button>
-              <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${escapeHtml(item.id)}">حذف آیتم</button>
+              <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${escapeHtml(item.id)}">${deletion}</button>
             </div>
           </div>
           ${depth < 3 ? `<ul class="header-custom-item__children">${renderTree(items, item.id, depth + 1)}</ul>` : ""}
@@ -105,14 +150,7 @@
   }
 
   function renderCustomItems() {
-    const api = window.BenamCustomHeaderMenu;
-    const host = document.getElementById("headerCustomItems");
-    if (!api || !host) return;
-    const items = api.read();
-    const tree = renderTree(items, api.rootKey, 1);
-    host.innerHTML = tree
-      ? `<ul class="header-custom-tree">${tree}</ul>`
-      : '<p class="header-custom-menu__empty">هنوز آیتم اضافه‌ای ثبت نشده است.</p>';
+    renderFields();
     renderParentOptions();
   }
 
@@ -135,16 +173,18 @@
     const labelForm = document.getElementById("headerLabelsForm");
     const resetButton = document.getElementById("resetHeaderLabelsBtn");
     const addForm = document.getElementById("addHeaderCustomItemForm");
-    const listHost = document.getElementById("headerCustomItems");
+    const view = document.getElementById("view-header-menu");
+    const restoreStructureButton = document.getElementById("restoreHeaderStructureBtn");
 
     if (labelForm && window.BenamHeaderLabels) {
       renderFields();
       labelForm.addEventListener("submit", (event) => {
         event.preventDefault();
         const values = {};
+        const currentLabels = window.BenamHeaderLabels.read();
         window.BenamHeaderLabels.fields.forEach((field) => {
           const input = labelForm.elements.namedItem(field.key);
-          values[field.key] = input ? input.value.trim() : "";
+          values[field.key] = input ? input.value.trim() : currentLabels[field.key] || field.value;
         });
         try {
           window.BenamHeaderLabels.save(values);
@@ -176,11 +216,14 @@
         }
         try {
           const items = api.read();
+          const parentKey = parentInput.value || api.rootKey;
+          const kind = api.kindForParent(parentKey, items);
           items.push({
             id: api.createId(),
             label,
-            href: api.createHref(label, items),
-            parentKey: parentInput.value || api.rootKey,
+            kind,
+            href: kind === "group" ? "" : api.createHref(label, items),
+            parentKey,
           });
           api.save(items);
           addForm.reset();
@@ -192,36 +235,72 @@
       });
     }
 
-    if (listHost && window.BenamCustomHeaderMenu) {
-      listHost.addEventListener("click", (event) => {
+    if (view && window.BenamCustomHeaderMenu) {
+      view.addEventListener("click", (event) => {
+        const api = window.BenamCustomHeaderMenu;
+        const staticDelete = event.target.closest("[data-static-delete]");
+        if (staticDelete) {
+          const key = staticDelete.getAttribute("data-static-delete");
+          const kind = staticDelete.getAttribute("data-delete-kind");
+          const message = kind === "main"
+            ? "کل این منو و همهٔ عنوان‌ها و زیرگروه‌های آن حذف شود؟"
+            : kind === "title"
+              ? "این عنوان و همهٔ زیرگروه‌های آن حذف شود؟"
+              : "فقط این زیرگروه از منو حذف شود؟";
+          if (!window.confirm(message)) return;
+          try {
+            api.hideStatic(key);
+            renderCustomItems();
+            toast(kind === "main" ? "کل منو و زیرمجموعه‌هایش حذف شد." : kind === "title" ? "عنوان و زیرگروه‌هایش حذف شد." : "زیرگروه حذف شد.");
+          } catch (error) {
+            toast(error.message || "حذف انجام نشد.", "error");
+          }
+          return;
+        }
+
         const button = event.target.closest("[data-custom-action]");
         if (!button) return;
-        const api = window.BenamCustomHeaderMenu;
         const items = api.read();
         const id = button.getAttribute("data-id");
         if (button.getAttribute("data-custom-action") === "delete") {
-          const next = removeTree(items, id);
+          const target = items.find((item) => item.id === id);
+          const message = target && target.kind === "group"
+            ? "این عنوان و همهٔ زیرگروه‌هایش حذف شود؟"
+            : target && target.kind === "menu"
+              ? "این منوی اصلی و همهٔ زیرمجموعه‌هایش حذف شود؟"
+              : "این زیرگروه حذف شود؟";
+          if (!window.confirm(message)) return;
           try {
-            api.save(next);
+            api.save(removeTree(items, id));
             renderCustomItems();
-            toast("آیتم و زیرمجموعه‌های آن حذف شدند.");
+            toast(target && target.kind === "group" ? "عنوان و زیرگروه‌هایش حذف شد." : "آیتم و زیرمجموعه‌هایش حذف شدند.");
           } catch (error) {
             toast(error.message || "حذف آیتم انجام نشد.", "error");
           }
           return;
         }
+
         const item = items.find((entry) => entry.id === id);
         if (!item) return;
-        const fields = Array.from(listHost.querySelectorAll("[data-custom-field]"));
-        const label = fields.find((field) => field.dataset.id === id && field.dataset.customField === "label");
+        const label = Array.from(view.querySelectorAll("[data-custom-field='label']"))
+          .find((field) => field.dataset.id === id);
         item.label = label ? label.value.trim() : "";
         try {
           api.save(items);
           renderCustomItems();
-          toast("آیتم به‌روزرسانی شد.");
+          toast("عنوان به‌روزرسانی شد.");
         } catch (error) {
-          toast(error.message || "ذخیره آیتم انجام نشد.", "error");
+          toast(error.message || "ذخیره عنوان انجام نشد.", "error");
         }
+      });
+    }
+
+    if (restoreStructureButton && window.BenamCustomHeaderMenu) {
+      restoreStructureButton.addEventListener("click", () => {
+        if (!window.confirm("آیتم‌های افزوده‌شده حذف و منوهای پیش‌فرض بازگردانده شوند؟")) return;
+        window.BenamCustomHeaderMenu.restoreStructure();
+        renderCustomItems();
+        toast("ساختار پیش‌فرض منو بازگردانده شد.");
       });
     }
 
