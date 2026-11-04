@@ -77,8 +77,6 @@
     const customRootFields = customRootMenus.map((item) => {
       const id = escapeHtml(item.id);
       const label = escapeHtml(item.label);
-      let category = "—";
-      try { category = new URL(item.href, window.location.href).searchParams.get("cat") || category; } catch (error) { /* keep fallback */ }
       return `
         <div class="header-label-editor__field-with-action" data-custom-main-id="${id}">
           <label class="form-group" for="custom-header-${id}">
@@ -87,7 +85,6 @@
               maxlength="80" required value="${label}" />
           </label>
           <button type="button" class="header-delete-action" data-custom-action="delete" data-id="${id}">حذف کل منو</button>
-          <div class="header-custom-item__placement">بعد از قوانین و مقررات · مقصد دسته: ${escapeHtml(category)}</div>
         </div>
       `;
     }).join("");
@@ -114,7 +111,6 @@
     host.innerHTML = [
       section(null, "منوهای اصلی", [
         mainRootFields,
-        customRootDetails,
         fields(["news", "aboutUs"], "main", false),
         dynamicChildren("news", 2),
         dynamicChildren("aboutUs", 2),
@@ -128,6 +124,7 @@
         fields(["allRegulations", "constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"], "item"),
         dynamicChildren("regulations", 2),
       ].join("")),
+      customRootDetails,
     ].join("");
   }
 
