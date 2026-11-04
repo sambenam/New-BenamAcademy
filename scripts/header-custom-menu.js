@@ -351,10 +351,22 @@
       const labels = window.BenamHeaderLabels ? window.BenamHeaderLabels.read() : {};
       const dropdown = ensureDesktopDropdown(nav, menu.key, labels[menu.key] || menu.fallback);
       if (!dropdown) return;
-      const section = document.createElement("section");
-      section.className = "custom-menu-injection";
-      children.forEach((item) => section.appendChild(makeDesktopNode(item, items)));
-      dropdown.appendChild(section);
+      let looseLinksSection = null;
+      children.forEach((item) => {
+        const node = makeDesktopNode(item, items);
+        if (item.kind === "group") {
+          node.classList.add("custom-menu-injection");
+          dropdown.appendChild(node);
+          looseLinksSection = null;
+          return;
+        }
+        if (!looseLinksSection) {
+          looseLinksSection = document.createElement("section");
+          looseLinksSection.className = "custom-menu-injection";
+          dropdown.appendChild(looseLinksSection);
+        }
+        looseLinksSection.appendChild(node);
+      });
     });
 
     descendants(items, ROOT).forEach((item) => {

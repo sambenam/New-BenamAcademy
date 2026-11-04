@@ -146,7 +146,12 @@ console.log("\nAdded menu items render in desktop and mobile through three level
   check("custom title groups and their links render on both layouts", () => {
     const heading = Array.from(window.document.querySelectorAll('.home-primary-nav .home-nav_dropdown strong')).find((node) => node.textContent === "عنوان افزوده دانشجویان");
     assert(heading);
-    assert(heading.closest("section").querySelector('a[href="list-page.html?cat=student-group-item"]'));
+    const groupSection = heading.closest("section");
+    const studentsDropdown = window.document.querySelector('.home-primary-nav [data-header-label="forStudents"] ~ .home-nav_dropdown');
+    assert.strictEqual(groupSection.parentElement, studentsDropdown);
+    const existingProjectHeading = studentsDropdown.querySelector('strong[data-header-label="studentsProjects"]');
+    assert(Array.from(studentsDropdown.children).indexOf(groupSection) > Array.from(studentsDropdown.children).indexOf(existingProjectHeading.closest("section")));
+    assert(groupSection.querySelector('a[href="list-page.html?cat=student-group-item"]'));
     const mobileTitle = Array.from(window.document.querySelectorAll('.mobile-header .custom-mobile-group__title')).find((node) => node.textContent === "عنوان افزوده دانشجویان");
     assert(mobileTitle);
     assert(mobileTitle.closest("li").querySelector('a[href="list-page.html?cat=student-group-item"]'));
@@ -221,6 +226,9 @@ console.log("\nAdmin editor integration");
     const second = add("زیرمنوی تازه", main.id);
     const third = add("سطح سوم تازه", second.id);
     assert(main && second && third);
+    const mainPanel = window.document.querySelector(`#view-header-menu [data-custom-id="${main.id}"]`);
+    assert(mainPanel.classList.contains("header-label-editor__group"));
+    assert(mainPanel.textContent.includes("مقصد دسته"));
     assert.strictEqual(window.document.querySelector('#view-header-menu input[data-custom-field="href"]'), null);
     assert.deepStrictEqual([main.parentKey, second.parentKey, third.parentKey], ["root", main.id, second.id]);
     assert.strictEqual(new URL(main.href, window.location.href).searchParams.get("cat"), "custom-منوی-تازه");
@@ -241,7 +249,13 @@ console.log("\nAdmin editor integration");
     assert.strictEqual(studentTitle.kind, "group");
     assert.strictEqual(studentTitle.href, "");
     assert.strictEqual(studentLink.kind, "link");
-    assert(window.document.querySelector(`#view-header-menu [data-custom-field="label"][data-id="${studentTitle.id}"]`));
+    const studentTitleSection = window.document.querySelector(`#view-header-menu [data-custom-id="${studentTitle.id}"]`);
+    assert(studentTitleSection.classList.contains("header-label-editor__subgroup--custom"));
+    assert(studentTitleSection.querySelector(`[data-custom-field="label"][data-id="${studentTitle.id}"]`));
+    const studentSection = window.document.querySelector('#headerLabelFields [data-header-section="forStudents"]');
+    assert.strictEqual(studentSection.querySelectorAll('.header-label-editor__subgroup:not(.header-label-editor__subgroup--mobile)').length, 4);
+    assert(studentTitleSection.textContent.includes("محل قرارگیری"));
+    assert(studentSection.querySelector(`[data-custom-field="label"][data-id="${studentLink.id}"]`));
     window.document.querySelector(`[data-custom-action="delete"][data-id="${studentTitle.id}"]`).click();
     assert(!window.BenamCustomHeaderMenu.read().some((item) => item.id === studentTitle.id || item.id === studentLink.id));
 

@@ -359,12 +359,13 @@ const section = (s) => console.log("\n" + s);
     // The 2,702 baseline predates the header-label editor. The separated
     // submenu fields and add-item/tree editor brought the observed count to
     // 2,770; this change adds 17 rules for per-level delete controls and inline
-    // hierarchy management. Splitting these rules into admin-header-menu.css
-    // keeps every stylesheet below 700 lines without dropping any CSS.
+    // hierarchy management; the peer-level custom menu sections add 13 more
+    // rules. Splitting these rules into admin-header-menu.css keeps every
+    // stylesheet below 700 lines without dropping any CSS.
     //
     // Keep this count explicit so an unexplained drop still catches a stylesheet
     // that stopped loading.
-    t("همه قوانین CSS بارگذاری شدند", rules === 2787, String(rules));
+    t("همه قوانین CSS بارگذاری شدند", rules === 2800, String(rules));
 
     const rootStyle = w.getComputedStyle(d.documentElement);
     const VARS = { "--primary": "#007AFF", "--danger": "#FF3B30" };

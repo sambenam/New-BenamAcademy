@@ -258,12 +258,52 @@
 }
 
 .header-inline-custom-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     flex: 1 0 100%;
     width: 100%;
-    margin: 8px 0 0;
+    margin: 10px 0 0;
     padding: 0;
-    list-style: none;
 }
+
+.header-custom-node__eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.header-custom-node__title-field { min-width: 0; margin: 0; }
+.header-custom-node__title-field > span { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 12px; }
+
+.header-custom-node__details {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(240px, 1.5fr);
+    align-items: end;
+    gap: 12px;
+}
+
+.header-custom-node__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.header-custom-node__heading { display: grid; grid-template-columns: minmax(180px, 1fr) auto; align-items: end; gap: 8px 12px; }
+.header-custom-node__heading > .header-custom-node__eyebrow { grid-column: 1 / -1; margin: 0; }
+.header-custom-node__heading .header-custom-item__actions { margin: 0; }
+.header-custom-node__actions { margin: 0; }
+.header-custom-node__children { margin-top: 12px; padding-right: 14px; border-right: 2px solid var(--glass-border); }
+.header-custom-node--link { width: 100%; }
+.header-custom-node--link .header-custom-item__card { padding: 12px; }
+.header-custom-node--link .header-custom-node__title-field { max-width: 560px; }
 
 .header-inline-custom-tree .header-custom-item__card { padding: 10px; }
 .header-inline-custom-tree .header-custom-item__fields { grid-template-columns: minmax(0, 1fr); }
@@ -277,4 +317,7 @@
     .header-label-editor__group-title { align-items: flex-start; flex-direction: column; }
     .header-label-editor__field-with-action { align-items: stretch; }
     .header-label-editor__field-with-action > .form-group { flex-basis: 100%; }
+    .header-custom-node__details,
+    .header-custom-node__heading { grid-template-columns: 1fr; }
+    .header-custom-node__heading > .header-custom-node__eyebrow { grid-column: auto; }
 }

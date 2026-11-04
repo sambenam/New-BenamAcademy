@@ -25,7 +25,7 @@
     const visible = (key) => !menuApi || !menuApi.isHidden(key);
     const dynamicChildren = (key, depth) => {
       const tree = renderTree(items, key, depth);
-      return tree ? `<ul class="header-inline-custom-tree">${tree}</ul>` : "";
+      return tree ? `<div class="header-inline-custom-tree" data-custom-parent="${escapeHtml(key)}">${tree}</div>` : "";
     };
     const input = (key, deleteKind, includeChildren) => {
       if (!visible(key)) return "";
@@ -88,11 +88,11 @@
     host.innerHTML = [
       section(null, "منوهای اصلی", [
         fields(["forStudents", "courses", "regulations"], null, false),
-        customMain ? `<div class="header-custom-main-items"><h3>منوهای افزوده‌شده (پس از قوانین و مقررات)</h3>${customMain}</div>` : "",
         fields(["news", "aboutUs"], "main", false),
         dynamicChildren("news", 2),
         dynamicChildren("aboutUs", 2),
       ].join("")),
+      customMain,
       section("forStudents", current.forStudents, studentGroups),
       section("courses", current.courses, [
         fields(["allCourses", "beginner", "intermediate", "advanced", "videos"], "item"),
@@ -120,31 +120,68 @@
     const api = window.BenamCustomHeaderMenu;
     return items.filter((item) => item.parentKey === parentKey && !api.isHidden(item.parentKey)).map((item) => {
       const parent = api.parentOptions().find((option) => option.key === item.parentKey);
-      const deletion = item.kind === "menu"
-        ? "حذف کل منو و زیرمجموعه‌ها"
-        : item.kind === "group"
-          ? "حذف عنوان و زیرگروه‌ها"
-          : "حذف زیرگروه";
-      const itemType = item.kind === "menu" ? "منوی اصلی" : item.kind === "group" ? "عنوان" : "زیرگروه";
+      const placement = escapeHtml(item.parentKey === api.rootKey ? "پس از قوانین و مقررات" : parent ? parent.label : "منوی هدر");
+      const id = escapeHtml(item.id);
+      const label = escapeHtml(item.label);
+      const category = (() => {
+        try { return new URL(item.href, window.location.href).searchParams.get("cat") || "—"; }
+        catch (error) { return "—"; }
+      })();
+      const children = depth < 3 ? renderTree(items, item.id, depth + 1) : "";
+      const actions = (extraClass) => `
+        <div class="header-custom-item__actions${extraClass ? ` ${extraClass}` : ""}">
+          <button type="button" class="btn-primary" data-custom-action="save" data-id="${id}">ذخیره عنوان</button>
+          <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${id}">${item.kind === "menu" ? "حذف کل منو و زیرمجموعه‌ها" : item.kind === "group" ? "حذف عنوان و زیرگروه‌ها" : "حذف زیرگروه"}</button>
+        </div>
+      `;
+      const titleField = `
+        <label class="form-group header-custom-node__title-field">
+          <span>${item.kind === "menu" ? "عنوان منوی اصلی" : item.kind === "group" ? "عنوان گروه" : "عنوان زیرگروه"}</span>
+          <input class="form-control" data-custom-field="label" data-id="${id}"
+            maxlength="80" required value="${label}" />
+        </label>
+      `;
+
+      if (item.kind === "menu") {
+        return `
+          <section class="header-label-editor__group header-custom-node header-custom-node--menu" data-custom-id="${id}">
+            <div class="header-label-editor__group-title">
+              <div><span class="header-custom-node__eyebrow">منوی اصلی افزوده‌شده · سطح ${depth}</span><h2>${label}</h2></div>
+              ${actions("header-custom-node__actions")}
+            </div>
+            <div class="header-custom-node__details">
+              ${titleField}
+              <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>مقصد دسته: ${escapeHtml(category)}</span></div>
+            </div>
+            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
+          </section>
+        `;
+      }
+
+      if (item.kind === "group") {
+        return `
+          <section class="header-label-editor__subgroup header-label-editor__subgroup--custom header-custom-node header-custom-node--group" data-custom-id="${id}">
+            <div class="header-custom-node__heading">
+              <div class="header-custom-node__eyebrow">عنوان گروه · سطح ${depth}</div>
+              ${titleField}
+              ${actions()}
+            </div>
+            <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>این عنوان گروهی است و مقصد لینک ندارد.</span></div>
+            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
+          </section>
+        `;
+      }
+
       return `
-        <li class="header-custom-item header-custom-item--${escapeHtml(item.kind)}" data-depth="${depth}">
+        <div class="header-custom-item header-custom-item--link header-custom-node header-custom-node--link" data-depth="${depth}" data-custom-id="${id}">
           <div class="header-custom-item__card">
-            <div class="header-custom-item__level">${itemType} · سطح ${depth}</div>
-            <div class="header-custom-item__placement">محل قرارگیری: ${escapeHtml(parent ? parent.label : "منوی هدر")}</div>
-            <div class="header-custom-item__fields">
-              <label class="form-group">
-                <span>عنوان</span>
-                <input class="form-control" data-custom-field="label" data-id="${escapeHtml(item.id)}"
-                  maxlength="80" required value="${escapeHtml(item.label)}" />
-              </label>
-            </div>
-            <div class="header-custom-item__actions">
-              <button type="button" class="btn-primary" data-custom-action="save" data-id="${escapeHtml(item.id)}">ذخیره عنوان</button>
-              <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${escapeHtml(item.id)}">${deletion}</button>
-            </div>
+            <div class="header-custom-node__eyebrow">زیرگروه · سطح ${depth}</div>
+            ${titleField}
+            <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>مقصد دسته: ${escapeHtml(category)}</span></div>
+            ${actions()}
+            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
           </div>
-          ${depth < 3 ? `<ul class="header-custom-item__children">${renderTree(items, item.id, depth + 1)}</ul>` : ""}
-        </li>
+        </div>
       `;
     }).join("");
   }

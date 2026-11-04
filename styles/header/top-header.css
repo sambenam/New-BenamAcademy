@@ -385,7 +385,7 @@ body.site-page .home-nav_dropdown {
   right: -18px;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 18px;
   width: min(720px, 88vw);
   padding: 20px;
