@@ -63,7 +63,7 @@
       if (key && !visible(key)) return "";
       const title = key ? (current[key] || fallback) + ":" : fallback;
       return `
-        <section class="header-label-editor__group" ${key ? `data-header-section="${escapeHtml(key)}"` : ""}>
+        <section class="header-label-editor__group" data-header-section="${escapeHtml(key || "main")}">
           <div class="header-label-editor__group-title">
             <h2>${escapeHtml(title)}</h2>
             ${key ? `<button type="button" class="header-delete-action" data-static-delete="${escapeHtml(key)}" data-delete-kind="main">حذف کل منو</button>` : ""}
@@ -85,11 +85,11 @@
     host.innerHTML = [
       section(null, "منوهای اصلی", [
         fields(["forStudents", "courses", "regulations"], null, false),
+        customMain,
         fields(["news", "aboutUs"], "main", false),
         dynamicChildren("news", 2),
         dynamicChildren("aboutUs", 2),
       ].join("")),
-      customMain,
       section("forStudents", current.forStudents, studentGroups),
       section("courses", current.courses, [
         fields(["allCourses", "beginner", "intermediate", "advanced", "videos"], "item"),
