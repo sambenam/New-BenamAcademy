@@ -73,7 +73,36 @@
       `;
     };
 
-    const customMain = dynamicChildren("root", 1);
+    const customRootMenus = items.filter((item) => item.parentKey === (menuApi ? menuApi.rootKey : "root") && item.kind === "menu");
+    const customRootFields = customRootMenus.map((item) => {
+      const id = escapeHtml(item.id);
+      const label = escapeHtml(item.label);
+      let category = "—";
+      try { category = new URL(item.href, window.location.href).searchParams.get("cat") || category; } catch (error) { /* keep fallback */ }
+      return `
+        <div class="header-label-editor__field-with-action" data-custom-main-id="${id}">
+          <label class="form-group" for="custom-header-${id}">
+            <span>${label}</span>
+            <input class="form-control" id="custom-header-${id}" data-custom-field="label" data-id="${id}"
+              maxlength="80" required value="${label}" />
+          </label>
+          <button type="button" class="header-delete-action" data-custom-action="delete" data-id="${id}">حذف کل منو</button>
+          <div class="header-custom-item__placement">بعد از قوانین و مقررات · مقصد دسته: ${escapeHtml(category)}</div>
+        </div>
+      `;
+    }).join("");
+    const customRootDetails = customRootMenus.map((item) => {
+      const id = escapeHtml(item.id);
+      const label = escapeHtml(item.label);
+      const children = renderTree(items, item.id, 2);
+      return `
+        <section class="header-label-editor__group" data-custom-main-details="${id}">
+          <div class="header-label-editor__group-title"><h2>${label}:</h2></div>
+          ${children || '<p class="header-custom-menu__empty">هنوز عنوان یا زیرگروهی به این منو اضافه نشده است.</p>'}
+        </section>
+      `;
+    }).join("");
+    const mainRootFields = `<div class="header-label-editor__fields">${["forStudents", "courses", "regulations"].map((key) => input(key, null, false)).join("")}${customRootFields}</div>`;
     const studentGroups = [
       subgroup("studentsBooks", "عنوان زیرگروه اول", ["diploma", "associate_degree", "bachelor", "master", "phd"]),
       subgroup("studentsExamGroup", "عنوان زیرگروه دوم", ["konkur1", "konkur2", "konkur3"]),
@@ -84,8 +113,8 @@
 
     host.innerHTML = [
       section(null, "منوهای اصلی", [
-        fields(["forStudents", "courses", "regulations"], null, false),
-        customMain,
+        mainRootFields,
+        customRootDetails,
         fields(["news", "aboutUs"], "main", false),
         dynamicChildren("news", 2),
         dynamicChildren("aboutUs", 2),
