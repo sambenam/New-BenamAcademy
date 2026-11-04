@@ -19,31 +19,51 @@
     if (!api || !host) return;
 
     const current = api.read();
-    const groups = [];
-    api.fields.forEach((field) => {
-      let group = groups.find((entry) => entry.name === field.group);
-      if (!group) {
-        group = { name: field.group, fields: [] };
-        groups.push(group);
-      }
-      group.fields.push(field);
-    });
-
-    host.innerHTML = groups.map((group) => `
+    const byKey = new Map(api.fields.map((field) => [field.key, field]));
+    const input = (key) => {
+      const field = byKey.get(key);
+      return `
+        <label class="form-group" for="header-label-${escapeHtml(field.key)}">
+          <span>${escapeHtml(field.label)}</span>
+          <input class="form-control" id="header-label-${escapeHtml(field.key)}"
+            name="${escapeHtml(field.key)}" maxlength="80" required
+            value="${escapeHtml(current[field.key] || field.value)}" />
+        </label>
+      `;
+    };
+    const fields = (keys) => `<div class="header-label-editor__fields">${keys.map(input).join("")}</div>`;
+    const subgroup = (titleKey, title, childKeys) => {
+      const field = byKey.get(titleKey);
+      return `
+        <section class="header-label-editor__subgroup">
+          <div class="header-label-editor__subgroup-title">
+            <label for="header-label-${escapeHtml(field.key)}">${escapeHtml(title)}:</label>
+            <input class="form-control" id="header-label-${escapeHtml(field.key)}"
+              name="${escapeHtml(field.key)}" maxlength="80" required
+              value="${escapeHtml(current[field.key] || field.value)}" />
+          </div>
+          ${fields(childKeys)}
+        </section>
+      `;
+    };
+    const section = (name, body) => `
       <section class="header-label-editor__group">
-        <h2>${escapeHtml(group.name)}</h2>
-        <div class="header-label-editor__fields">
-          ${group.fields.map((field) => `
-            <label class="form-group" for="header-label-${escapeHtml(field.key)}">
-              <span>${escapeHtml(field.label)}</span>
-              <input class="form-control" id="header-label-${escapeHtml(field.key)}"
-                name="${escapeHtml(field.key)}" maxlength="80" required
-                value="${escapeHtml(current[field.key] || field.value)}" />
-            </label>
-          `).join("")}
-        </div>
+        <h2>${escapeHtml(name)}</h2>
+        ${body}
       </section>
-    `).join("");
+    `;
+
+    host.innerHTML = [
+      section("منوهای اصلی", fields(["forStudents", "courses", "regulations", "news", "aboutUs"])),
+      section(current.forStudents + ":", [
+        subgroup("studentsBooks", "عنوان زیرگروه اول", ["diploma", "associate_degree", "bachelor", "master", "phd"]),
+        subgroup("studentsExamGroup", "عنوان زیرگروه دوم", ["konkur1", "konkur2", "konkur3"]),
+        subgroup("studentsProjects", "عنوان زیرگروه سوم", ["Enterpreneurship_projects", "Enternship-projects", "Financial-project"]),
+        `<section class="header-label-editor__subgroup header-label-editor__subgroup--mobile"><h3>گزینهٔ موبایل:</h3>${fields(["allForStudents"])}</section>`,
+      ].join("")),
+      section(current.courses + ":", fields(["allCourses", "beginner", "intermediate", "advanced", "videos"])),
+      section(current.regulations + ":", fields(["allRegulations", "constitution", "commercialLaw", "laborLaw", "taxLaw", "socialSecurityLaw"])),
+    ].join("");
   }
 
   function renderParentOptions() {
@@ -58,30 +78,30 @@
   }
 
   function renderTree(items, parentKey, depth) {
-    return items.filter((item) => item.parentKey === parentKey).map((item) => `
-      <li class="header-custom-item" data-depth="${depth}">
-        <div class="header-custom-item__card">
-          <div class="header-custom-item__level">سطح ${depth} · ${escapeHtml(item.label)}</div>
-          <div class="header-custom-item__fields">
-            <label class="form-group">
-              <span>عنوان آیتم</span>
-              <input class="form-control" data-custom-field="label" data-id="${escapeHtml(item.id)}"
-                maxlength="80" required value="${escapeHtml(item.label)}" />
-            </label>
-            <label class="form-group">
-              <span>مقصد لینک</span>
-              <input class="form-control" data-custom-field="href" data-id="${escapeHtml(item.id)}"
-                maxlength="500" required dir="ltr" value="${escapeHtml(item.href)}" />
-            </label>
+    const api = window.BenamCustomHeaderMenu;
+    return items.filter((item) => item.parentKey === parentKey).map((item) => {
+      const parent = api.parentOptions().find((option) => option.key === item.parentKey);
+      return `
+        <li class="header-custom-item" data-depth="${depth}">
+          <div class="header-custom-item__card">
+            <div class="header-custom-item__level">سطح ${depth} · ${escapeHtml(item.label)}</div>
+            <div class="header-custom-item__placement">محل قرارگیری: ${escapeHtml(parent ? parent.label : "منوی هدر")}</div>
+            <div class="header-custom-item__fields">
+              <label class="form-group">
+                <span>عنوان آیتم</span>
+                <input class="form-control" data-custom-field="label" data-id="${escapeHtml(item.id)}"
+                  maxlength="80" required value="${escapeHtml(item.label)}" />
+              </label>
+            </div>
+            <div class="header-custom-item__actions">
+              <button type="button" class="btn-primary" data-custom-action="save" data-id="${escapeHtml(item.id)}">ذخیره عنوان</button>
+              <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${escapeHtml(item.id)}">حذف آیتم</button>
+            </div>
           </div>
-          <div class="header-custom-item__actions">
-            <button type="button" class="btn-primary" data-custom-action="save" data-id="${escapeHtml(item.id)}">ذخیره آیتم</button>
-            <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${escapeHtml(item.id)}">حذف آیتم</button>
-          </div>
-        </div>
-        ${depth < 3 ? `<ul class="header-custom-item__children">${renderTree(items, item.id, depth + 1)}</ul>` : ""}
-      </li>
-    `).join("");
+          ${depth < 3 ? `<ul class="header-custom-item__children">${renderTree(items, item.id, depth + 1)}</ul>` : ""}
+        </li>
+      `;
+    }).join("");
   }
 
   function renderCustomItems() {
@@ -148,12 +168,10 @@
         event.preventDefault();
         const api = window.BenamCustomHeaderMenu;
         const labelInput = addForm.elements.namedItem("customMenuLabel");
-        const hrefInput = addForm.elements.namedItem("customMenuHref");
         const parentInput = addForm.elements.namedItem("customMenuParent");
         const label = labelInput.value.trim();
-        const href = hrefInput.value.trim();
-        if (!label || !href) {
-          toast("عنوان و مقصد لینک را وارد کنید.", "error");
+        if (!label) {
+          toast("عنوان آیتم را وارد کنید.", "error");
           return;
         }
         try {
@@ -161,7 +179,7 @@
           items.push({
             id: api.createId(),
             label,
-            href,
+            href: api.createHref(label, items),
             parentKey: parentInput.value || api.rootKey,
           });
           api.save(items);
@@ -196,9 +214,7 @@
         if (!item) return;
         const fields = Array.from(listHost.querySelectorAll("[data-custom-field]"));
         const label = fields.find((field) => field.dataset.id === id && field.dataset.customField === "label");
-        const href = fields.find((field) => field.dataset.id === id && field.dataset.customField === "href");
         item.label = label ? label.value.trim() : "";
-        item.href = href ? href.value.trim() : "";
         try {
           api.save(items);
           renderCustomItems();

@@ -12,6 +12,7 @@
          carries the [hidden] rule that must win over everything before it. -->
   <link rel="stylesheet" href="../styles/pages/admin-base.css" />
   <link rel="stylesheet" href="../styles/pages/admin-views.css" />
+  <link rel="stylesheet" href="../styles/pages/admin-header-menu.css" />
   <link rel="stylesheet" href="../styles/pages/admin-modals.css" />
   <link rel="stylesheet" href="../styles/pages/admin-content-tab.css" />
   <link rel="stylesheet" href="../styles/pages/admin-content-tab-2.css" />
@@ -615,16 +616,12 @@
         <section class="header-custom-menu-manager" aria-labelledby="headerCustomMenuTitle">
           <div class="header-custom-menu-manager__heading">
             <h2 id="headerCustomMenuTitle">افزودن آیتم به منو</h2>
-            <p>آیتم‌ها را به منوی اصلی، هر منو یا زیرمجموعهٔ فعلی اضافه کنید و زیرمجموعه‌های بعدی را تا سطح سوم بسازید.</p>
+            <p>فقط عنوان و محل قرارگیری را انتخاب کنید. منوی اصلی جدید همیشه پیش از «درباره ما» قرار می‌گیرد و پیوند دسته از عنوان ساخته می‌شود؛ برای زیرمنوها، محل انتخاب‌شده اعمال می‌شود.</p>
           </div>
           <form id="addHeaderCustomItemForm" class="header-custom-menu-add">
             <label class="form-group" for="customMenuLabel">
               <span>عنوان آیتم</span>
               <input class="form-control" id="customMenuLabel" name="customMenuLabel" maxlength="80" required />
-            </label>
-            <label class="form-group" for="customMenuHref">
-              <span>مقصد لینک</span>
-              <input class="form-control" id="customMenuHref" name="customMenuHref" maxlength="500" required dir="ltr" placeholder="list-page.html?cat=..." />
             </label>
             <label class="form-group" for="customMenuParent">
               <span>محل قرارگیری</span>

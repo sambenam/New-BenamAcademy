@@ -105,6 +105,24 @@
     return "menu-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
   }
 
+  function createHref(label, items) {
+    const base = "custom-" + String(label || "")
+      .normalize("NFKC")
+      .replace(/[\u200c\u200e\u200f]/g, "")
+      .trim()
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "custom-item";
+    const used = new Set((items || []).map((item) => {
+      try { return new URL(item.href, window.location.href).searchParams.get("cat"); }
+      catch (error) { return null; }
+    }).filter(Boolean));
+    let key = base;
+    let suffix = 2;
+    while (used.has(key)) key = base + "-" + suffix++;
+    return "list-page.html?cat=" + encodeURIComponent(key);
+  }
+
   function descendants(items, parentKey) {
     return items.filter((item) => item.parentKey === parentKey);
   }
@@ -121,7 +139,7 @@
   function getParentOptions() {
     const items = read();
     const labels = window.BenamHeaderLabels ? window.BenamHeaderLabels.read() : {};
-    const options = [{ key: ROOT, label: "منوی اصلی جدید", depth: 0 }];
+    const options = [{ key: ROOT, label: "منوی اصلی — قبل از درباره ما", depth: 0 }];
     BUILTIN_MENUS.forEach((menu) => {
       options.push({ key: menu.key, label: labels[menu.key] || menu.fallback, depth: 1 });
     });
@@ -252,7 +270,10 @@
         dropdown.appendChild(section);
         menuItem.appendChild(dropdown);
       }
-      nav.appendChild(menuItem);
+      const aboutLink = getDesktopRootLink(nav, "aboutUs");
+      const beforeAbout = aboutLink ? (aboutLink.closest(".home-nav_item") || aboutLink) : null;
+      if (beforeAbout) nav.insertBefore(menuItem, beforeAbout);
+      else nav.appendChild(menuItem);
     });
 
     builtInSubmenuFields().forEach((field) => {
@@ -456,7 +477,10 @@
         children.forEach((child) => menu.appendChild(makeMobileNode(child, items)));
         li.appendChild(menu);
       }
-      root.appendChild(li);
+      const menuList = root.querySelector(".mobile-menu_list");
+      const aboutItem = findMobileRoot(root, "aboutUs");
+      if (menuList && aboutItem) menuList.insertBefore(li, aboutItem);
+      else if (menuList) menuList.appendChild(li);
     });
   }
 
@@ -476,6 +500,7 @@
     read,
     save,
     createId: makeId,
+    createHref,
     parentOptions: getParentOptions,
     apply,
   };

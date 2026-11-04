@@ -356,18 +356,15 @@ const section = (s) => console.log("\n" + s);
         /* cross-origin font sheet */
       }
     });
-    // 2,655 was the count before admin.css was split into twelve files, and it
-    // stayed at 2,655 across the split - which is what proved nothing was lost.
+    // The 2,702 baseline predates the header-label editor. That earlier feature
+    // brought the observed count to 2,733. This change deliberately adds 37
+    // rules for separated submenu fields and the add-item/tree editor; splitting
+    // those rules into admin-header-menu.css keeps every stylesheet below 700
+    // lines without dropping any CSS.
     //
-    // Since then, deliberately:
-    //   +15  placement picker in the add-item dialog
-    //   +12  two-column layout for that dialog
-    //   = 2,682
-    //
-    // The number is not sacred. Update it when rules are deliberately added or
-    // removed, and say why in the commit. An UNEXPLAINED change is the signal
-    // worth catching: it means a stylesheet stopped loading.
-    t("همه قوانین CSS بارگذاری شدند", rules === 2702, String(rules));
+    // Keep this count explicit so an unexplained drop still catches a stylesheet
+    // that stopped loading.
+    t("همه قوانین CSS بارگذاری شدند", rules === 2770, String(rules));
 
     const rootStyle = w.getComputedStyle(d.documentElement);
     const VARS = { "--primary": "#007AFF", "--danger": "#FF3B30" };

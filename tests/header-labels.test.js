@@ -110,6 +110,12 @@ console.log("\nAdded menu items render in desktop and mobile through three level
   check("custom root appears in desktop and mobile", () => {
     assert.strictEqual(window.document.querySelector('.home-primary-nav .custom-primary-menu > a').textContent, "منوی آزمایشی");
     assert.strictEqual(window.document.querySelector('.mobile-header .custom-mobile-root > .custom-mobile-root-row a').textContent, "منوی آزمایشی");
+    const desktopOrder = Array.from(window.document.querySelector('.home-primary-nav').children);
+    const aboutLink = window.document.querySelector('.home-primary-nav [data-header-label="aboutUs"]');
+    const aboutDesktop = aboutLink.closest('.home-nav_item') || aboutLink;
+    assert(desktopOrder.indexOf(window.document.querySelector('.home-primary-nav .custom-primary-menu')) < desktopOrder.indexOf(aboutDesktop));
+    const mobileOrder = Array.from(window.document.querySelector('.mobile-header .mobile-menu_list').children);
+    assert(mobileOrder.indexOf(window.document.querySelector('.mobile-header .custom-mobile-root')) < mobileOrder.indexOf(window.document.querySelector('.mobile-header [data-header-label="aboutUs"]').closest('.mobile-dropdown')));
   });
   check("third-level item is rendered and keeps its link destination", () => {
     const desktop = window.document.querySelector('.custom-nav-entry__link[href="list-page.html?cat=deep"]');
@@ -159,32 +165,42 @@ console.log("\nAdmin editor integration");
     assert(window.document.getElementById("view-header-menu"));
     assert(window.document.getElementById("headerLabelsForm"));
     assert(window.document.getElementById("resetHeaderLabelsBtn"));
+    assert(window.document.getElementById("customMenuHref") === null);
+    assert(window.document.getElementById("customMenuParent").options[0].textContent.includes("قبل از درباره ما"));
   });
   check("editor presents exactly the four header groups", () => {
     const groups = Array.from(window.document.querySelectorAll(".header-label-editor__group h2"), (h) => h.textContent.trim());
-    assert.deepStrictEqual(groups, ["منوهای اصلی", "برای دانشجویان", "دوره‌ها", "قوانین و مقررات"]);
+    assert.deepStrictEqual(groups, ["منوهای اصلی", "برای دانشجویان:", "دوره‌ها:", "قوانین و مقررات:"]);
     assert.strictEqual(window.document.querySelectorAll("#headerLabelFields input").length, fieldKeys.length);
+    const studentSubgroups = Array.from(window.document.querySelectorAll(".header-label-editor__group:nth-of-type(2) .header-label-editor__subgroup-title label"), (label) => label.textContent.trim());
+    assert.deepStrictEqual(studentSubgroups, ["عنوان زیرگروه اول:", "عنوان زیرگروه دوم:", "عنوان زیرگروه سوم:"]);
+    const firstSubgroupKeys = Array.from(window.document.querySelectorAll(".header-label-editor__group:nth-of-type(2) .header-label-editor__subgroup:nth-of-type(1) .header-label-editor__fields input"), (input) => input.name);
+    assert.deepStrictEqual(firstSubgroupKeys, ["diploma", "associate_degree", "bachelor", "master", "phd"]);
   });
   check("custom item form adds a main menu and nested items through level three", () => {
     const addForm = window.document.getElementById("addHeaderCustomItemForm");
-    const add = (label, parentKey, href) => {
+    const add = (label, parentKey) => {
       addForm.elements.namedItem("customMenuLabel").value = label;
-      addForm.elements.namedItem("customMenuHref").value = href;
       addForm.elements.namedItem("customMenuParent").value = parentKey;
       addForm.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
       return window.BenamCustomHeaderMenu.read().find((item) => item.label === label);
     };
-    const main = add("منوی تازه", "root", "list-page.html?cat=fresh");
-    const second = add("زیرمنوی تازه", main.id, "list-page.html?cat=fresh-sub");
-    const third = add("سطح سوم تازه", second.id, "list-page.html?cat=fresh-deep");
+    const main = add("منوی تازه", "root");
+    const second = add("زیرمنوی تازه", main.id);
+    const third = add("سطح سوم تازه", second.id);
     assert(main && second && third);
+    assert.strictEqual(window.document.querySelector('#headerCustomItems input[data-custom-field="href"]'), null);
     assert.deepStrictEqual([main.parentKey, second.parentKey, third.parentKey], ["root", main.id, second.id]);
+    assert.strictEqual(new URL(main.href, window.location.href).searchParams.get("cat"), "custom-منوی-تازه");
     assert(!Array.from(window.document.getElementById("customMenuParent").options).some((option) => option.value === third.id));
+    const thirdHref = third.href;
     const thirdLabel = window.document.querySelector(`#headerCustomItems [data-custom-field="label"][data-id="${third.id}"]`);
     assert(thirdLabel);
     thirdLabel.value = "ویرایش سطح سوم";
     window.document.querySelector(`[data-custom-action="save"][data-id="${third.id}"]`).click();
-    assert.strictEqual(window.BenamCustomHeaderMenu.read().find((item) => item.id === third.id).label, "ویرایش سطح سوم");
+    const renamedThird = window.BenamCustomHeaderMenu.read().find((item) => item.id === third.id);
+    assert.strictEqual(renamedThird.label, "ویرایش سطح سوم");
+    assert.strictEqual(renamedThird.href, thirdHref);
     window.document.querySelector(`[data-custom-action="delete"][data-id="${second.id}"]`).click();
     assert.deepStrictEqual(Array.from(window.BenamCustomHeaderMenu.read(), (item) => item.id), [main.id]);
   });
