@@ -129,17 +129,17 @@
 }
 
 .toast {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(15, 23, 42, 0.98);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(148, 163, 184, 0.28);
     padding: 14px 20px;
     border-radius: var(--radius-sm);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
     gap: 12px;
     font-size: 14px;
-    color: var(--text-primary);
+    color: #f8fafc;
     animation: slideInLeft 0.3s ease;
     min-width: 280px;
 }

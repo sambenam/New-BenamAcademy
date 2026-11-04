@@ -113,17 +113,3 @@ body.site-page .custom-nav-entry.is-open > .custom-nav-submenu {
 .mobile-dropdown.active > .custom-mobile-root-row .custom-mobile-root-toggle i {
     transform: rotate(180deg);
 }
-
-body.site-page .custom-nav-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.custom-mobile-group__title {
-    flex: 1 1 auto;
-    color: #a6b1ff;
-    font-size: 13px;
-}
-
-.custom-mobile-group .custom-mobile-node__row { padding: 4px 10px; }

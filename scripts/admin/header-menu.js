@@ -23,10 +23,7 @@
     const items = menuApi ? menuApi.read() : [];
     const byKey = new Map(api.fields.map((field) => [field.key, field]));
     const visible = (key) => !menuApi || !menuApi.isHidden(key);
-    const dynamicChildren = (key, depth) => {
-      const tree = renderTree(items, key, depth);
-      return tree ? `<div class="header-inline-custom-tree" data-custom-parent="${escapeHtml(key)}">${tree}</div>` : "";
-    };
+    const dynamicChildren = (key, depth) => renderTree(items, key, depth);
     const input = (key, deleteKind, includeChildren) => {
       if (!visible(key)) return "";
       const field = byKey.get(key);
@@ -116,9 +113,34 @@
     if (Array.from(select.options).some((option) => option.value === previous)) select.value = previous;
   }
 
+  function subgroupOrdinal(item, items) {
+    const api = window.BenamCustomHeaderMenu;
+    const staticOrder = { studentsBooks: 1, studentsExamGroup: 2, studentsProjects: 3 };
+    let base = 0;
+    if (item.parentKey === "forStudents") {
+      Object.entries(staticOrder).forEach(([key, order]) => {
+        if (!api.isHidden(key)) base = Math.max(base, order);
+      });
+    }
+    const siblings = items.filter((entry) => entry.parentKey === item.parentKey && entry.kind === "group");
+    const position = Math.max(0, siblings.findIndex((entry) => entry.id === item.id));
+    const number = base + position + 1;
+    const names = ["اول", "دوم", "سوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم"];
+    return names[number - 1] || `شمارهٔ ${new Intl.NumberFormat("fa-IR").format(number)}`;
+  }
+
   function renderTree(items, parentKey, depth) {
     const api = window.BenamCustomHeaderMenu;
-    return items.filter((item) => item.parentKey === parentKey && !api.isHidden(item.parentKey)).map((item) => {
+    const children = items.filter((item) => item.parentKey === parentKey && !api.isHidden(item.parentKey));
+    const output = [];
+    let links = [];
+    const flushLinks = () => {
+      if (!links.length) return;
+      output.push(`<div class="header-label-editor__fields">${links.join("")}</div>`);
+      links = [];
+    };
+
+    children.forEach((item) => {
       const parent = api.parentOptions().find((option) => option.key === item.parentKey);
       const placement = escapeHtml(item.parentKey === api.rootKey ? "پس از قوانین و مقررات" : parent ? parent.label : "منوی هدر");
       const id = escapeHtml(item.id);
@@ -127,63 +149,63 @@
         try { return new URL(item.href, window.location.href).searchParams.get("cat") || "—"; }
         catch (error) { return "—"; }
       })();
-      const children = depth < 3 ? renderTree(items, item.id, depth + 1) : "";
-      const actions = (extraClass) => `
-        <div class="header-custom-item__actions${extraClass ? ` ${extraClass}` : ""}">
-          <button type="button" class="btn-primary" data-custom-action="save" data-id="${id}">ذخیره عنوان</button>
-          <button type="button" class="btn-secondary" data-custom-action="delete" data-id="${id}">${item.kind === "menu" ? "حذف کل منو و زیرمجموعه‌ها" : item.kind === "group" ? "حذف عنوان و زیرگروه‌ها" : "حذف زیرگروه"}</button>
-        </div>
-      `;
-      const titleField = `
-        <label class="form-group header-custom-node__title-field">
-          <span>${item.kind === "menu" ? "عنوان منوی اصلی" : item.kind === "group" ? "عنوان گروه" : "عنوان زیرگروه"}</span>
-          <input class="form-control" data-custom-field="label" data-id="${id}"
+      const nested = depth < 3 ? renderTree(items, item.id, depth + 1) : "";
+      const deleteButton = (title) => `<button type="button" class="header-delete-action" data-custom-action="delete" data-id="${id}">${title}</button>`;
+      const input = (fieldLabel, inputId) => `
+        <label class="form-group" for="${inputId}">
+          <span>${fieldLabel}</span>
+          <input class="form-control" id="${inputId}" data-custom-field="label" data-id="${id}"
             maxlength="80" required value="${label}" />
         </label>
       `;
 
-      if (item.kind === "menu") {
-        return `
-          <section class="header-label-editor__group header-custom-node header-custom-node--menu" data-custom-id="${id}">
-            <div class="header-label-editor__group-title">
-              <div><span class="header-custom-node__eyebrow">منوی اصلی افزوده‌شده · سطح ${depth}</span><h2>${label}</h2></div>
-              ${actions("header-custom-node__actions")}
-            </div>
-            <div class="header-custom-node__details">
-              ${titleField}
-              <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>مقصد دسته: ${escapeHtml(category)}</span></div>
-            </div>
-            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
-          </section>
-        `;
-      }
-
-      if (item.kind === "group") {
-        return `
-          <section class="header-label-editor__subgroup header-label-editor__subgroup--custom header-custom-node header-custom-node--group" data-custom-id="${id}">
-            <div class="header-custom-node__heading">
-              <div class="header-custom-node__eyebrow">عنوان گروه · سطح ${depth}</div>
-              ${titleField}
-              ${actions()}
-            </div>
-            <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>این عنوان گروهی است و مقصد لینک ندارد.</span></div>
-            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
-          </section>
-        `;
-      }
-
-      return `
-        <div class="header-custom-item header-custom-item--link header-custom-node header-custom-node--link" data-depth="${depth}" data-custom-id="${id}">
-          <div class="header-custom-item__card">
-            <div class="header-custom-node__eyebrow">زیرگروه · سطح ${depth}</div>
-            ${titleField}
-            <div class="header-custom-node__meta"><span>محل قرارگیری: ${placement}</span><span>مقصد دسته: ${escapeHtml(category)}</span></div>
-            ${actions()}
-            ${children ? `<div class="header-custom-node__children">${children}</div>` : ""}
+      if (item.kind === "link") {
+        links.push(`
+          <div class="header-label-editor__field-with-action" data-custom-id="${id}">
+            ${input("عنوان زیرگروه", `custom-header-${id}`)}
+            ${deleteButton("حذف زیرگروه")}
+            <div class="header-custom-item__placement">محل قرارگیری: ${placement} · مقصد دسته: ${escapeHtml(category)}</div>
+            ${nested}
           </div>
-        </div>
-      `;
-    }).join("");
+        `);
+        return;
+      }
+
+      flushLinks();
+      if (item.kind === "menu") {
+        output.push(`
+          <section class="header-label-editor__group" data-custom-id="${id}">
+            <div class="header-label-editor__group-title">
+              <h2>${label}:</h2>
+              ${deleteButton("حذف کل منو")}
+            </div>
+            <div class="header-label-editor__fields">
+              ${input("عنوان منوی اصلی", `custom-header-${id}`)}
+            </div>
+            <div class="header-custom-item__placement">محل قرارگیری: ${placement} · مقصد دسته: ${escapeHtml(category)}</div>
+            ${nested}
+          </section>
+        `);
+        return;
+      }
+
+      const ordinal = `عنوان زیرگروه ${subgroupOrdinal(item, items)}`;
+      output.push(`
+        <section class="header-label-editor__subgroup" data-custom-id="${id}">
+          <div class="header-label-editor__subgroup-title">
+            <label for="custom-header-${id}">${ordinal}:</label>
+            <input class="form-control" id="custom-header-${id}" data-custom-field="label" data-id="${id}"
+              maxlength="80" required value="${label}" />
+            ${deleteButton("حذف عنوان")}
+          </div>
+          ${nested}
+          <div class="header-custom-item__placement">محل قرارگیری: ${placement} · عنوان گروهی، بدون مقصد لینک</div>
+        </section>
+      `);
+    });
+
+    flushLinks();
+    return output.join("");
   }
 
   function renderCustomItems() {
@@ -224,8 +246,17 @@
           values[field.key] = input ? input.value.trim() : currentLabels[field.key] || field.value;
         });
         try {
+          const menuApi = window.BenamCustomHeaderMenu;
+          if (menuApi) {
+            const customItems = menuApi.read();
+            labelForm.querySelectorAll('[data-custom-field="label"][data-id]').forEach((input) => {
+              const item = customItems.find((entry) => entry.id === input.getAttribute("data-id"));
+              if (item) item.label = input.value.trim();
+            });
+            menuApi.save(customItems);
+          }
           window.BenamHeaderLabels.save(values);
-          toast("نام‌های منو در این مرورگر ذخیره شد.");
+          toast("تغییرات منو در این مرورگر ذخیره شد.");
         } catch (error) {
           toast(error.message || "ذخیره نام‌های منو انجام نشد.", "error");
         }
@@ -295,39 +326,23 @@
           return;
         }
 
-        const button = event.target.closest("[data-custom-action]");
+        const button = event.target.closest('[data-custom-action="delete"]');
         if (!button) return;
         const items = api.read();
         const id = button.getAttribute("data-id");
-        if (button.getAttribute("data-custom-action") === "delete") {
-          const target = items.find((item) => item.id === id);
-          const message = target && target.kind === "group"
-            ? "این عنوان و همهٔ زیرگروه‌هایش حذف شود؟"
-            : target && target.kind === "menu"
-              ? "این منوی اصلی و همهٔ زیرمجموعه‌هایش حذف شود؟"
-              : "این زیرگروه حذف شود؟";
-          if (!window.confirm(message)) return;
-          try {
-            api.save(removeTree(items, id));
-            renderCustomItems();
-            toast(target && target.kind === "group" ? "عنوان و زیرگروه‌هایش حذف شد." : "آیتم و زیرمجموعه‌هایش حذف شدند.");
-          } catch (error) {
-            toast(error.message || "حذف آیتم انجام نشد.", "error");
-          }
-          return;
-        }
-
-        const item = items.find((entry) => entry.id === id);
-        if (!item) return;
-        const label = Array.from(view.querySelectorAll("[data-custom-field='label']"))
-          .find((field) => field.dataset.id === id);
-        item.label = label ? label.value.trim() : "";
+        const target = items.find((item) => item.id === id);
+        const message = target && target.kind === "group"
+          ? "این عنوان و همهٔ زیرگروه‌هایش حذف شود؟"
+          : target && target.kind === "menu"
+            ? "این منوی اصلی و همهٔ زیرمجموعه‌هایش حذف شود؟"
+            : "این زیرگروه حذف شود؟";
+        if (!window.confirm(message)) return;
         try {
-          api.save(items);
+          api.save(removeTree(items, id));
           renderCustomItems();
-          toast("عنوان به‌روزرسانی شد.");
+          toast(target && target.kind === "group" ? "عنوان و زیرگروه‌هایش حذف شد." : "آیتم و زیرمجموعه‌هایش حذف شدند.");
         } catch (error) {
-          toast(error.message || "ذخیره عنوان انجام نشد.", "error");
+          toast(error.message || "حذف آیتم انجام نشد.", "error");
         }
       });
     }

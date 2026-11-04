@@ -269,7 +269,6 @@
     const children = descendants(items, item.id);
     if (item.kind === "group") {
       const group = document.createElement("section");
-      group.className = "custom-nav-group";
       const heading = document.createElement("strong");
       heading.textContent = item.label;
       group.appendChild(heading);
@@ -451,7 +450,6 @@
     const children = descendants(items, item.id);
     if (item.kind === "group") {
       const heading = document.createElement("strong");
-      heading.className = "custom-mobile-group__title";
       heading.textContent = item.label;
       row.appendChild(heading);
     } else {

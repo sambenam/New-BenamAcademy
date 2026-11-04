@@ -357,15 +357,18 @@ const section = (s) => console.log("\n" + s);
       }
     });
     // The 2,702 baseline predates the header-label editor. The separated
-    // submenu fields and add-item/tree editor brought the observed count to
-    // 2,770; this change adds 17 rules for per-level delete controls and inline
-    // hierarchy management; the peer-level custom menu sections add 13 more
-    // rules. Splitting these rules into admin-header-menu.css keeps every
-    // stylesheet below 700 lines without dropping any CSS.
-    //
-    // Keep this count explicit so an unexplained drop still catches a stylesheet
-    // that stopped loading.
-    t("همه قوانین CSS بارگذاری شدند", rules === 2800, String(rules));
+    // submenu fields and custom-item editor brought the observed count to 2,770;
+    // the current inline hierarchy and delete controls add ten rules while
+    // retaining the shared subgroup styling. Keep this count explicit so an
+    // unexplained drop catches a stylesheet that stopped loading.
+    t("همه قوانین CSS بارگذاری شدند", rules === 2780, String(rules));
+
+    const toast = d.createElement("div");
+    toast.className = "toast success";
+    d.body.appendChild(toast);
+    const toastStyle = w.getComputedStyle(toast);
+    t("متن نوتیفیکیشن خوانا است", toastStyle.color === "rgb(248, 250, 252)", toastStyle.color);
+    t("پس‌زمینهٔ نوتیفیکیشن تیره و متضاد است", toastStyle.backgroundColor.includes("15, 23, 42"), toastStyle.backgroundColor);
 
     const rootStyle = w.getComputedStyle(d.documentElement);
     const VARS = { "--primary": "#007AFF", "--danger": "#FF3B30" };
