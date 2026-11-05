@@ -310,9 +310,9 @@ body.home-page .new-courses_link:hover i {
     min-height: 168px;
   }
 
+  /* On very narrow screens the badge crowds the small card, so drop it. */
   body.home-page .new-courses_badge {
-    top: 16px;
-    right: 16px;
+    display: none;
   }
 
   body.home-page .new-courses_content {
