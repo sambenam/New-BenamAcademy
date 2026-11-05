@@ -169,7 +169,13 @@ t(
 );
 t(
   "فهرست جای قرارگیری پر شد",
-  doc.querySelectorAll("#homeSectionAfter option").length === 5,
+  doc.querySelectorAll("#homeSectionAfter option").length === 4,
+);
+t(
+  "گزینه آخرین اخبار برای سکشن جدید حذف شده",
+  !Array.from(doc.querySelectorAll("#homeSectionAfter option")).some(
+    (option) => option.value === "exams",
+  ),
 );
 
 doc.getElementById("homeSectionTitle").value = "دوره‌های پیشنهادی";

@@ -85,7 +85,11 @@ function renderHomeSectionsList() {
 function populateSectionAnchors(selected) {
   const select = document.getElementById("homeSectionAfter");
   if (!select) return;
-  select.innerHTML = HOME_SECTION_ANCHORS.map(function (anchor) {
+  // Legacy anchors stay out of the list unless this section already uses one,
+  // so editing an old section does not silently move it.
+  select.innerHTML = HOME_SECTION_ANCHORS.filter(function (anchor) {
+    return !anchor.legacy || anchor.key === selected;
+  }).map(function (anchor) {
     return (
       '<option value="' +
       anchor.key +

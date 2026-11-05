@@ -25,7 +25,15 @@ const HOME_SECTION_ANCHORS = [
   { key: "articles", title: "مقالات", selector: ".articles-section" },
   // Keep the saved `exams` key for existing custom sections, but anchor it to
   // the homepage news ticker that now replaces the old exam/news card section.
-  { key: "exams", title: "آخرین اخبار سایت", selector: "[data-home-news]" },
+  // `legacy` hides it from the panel's placement dropdown: new sections can no
+  // longer be placed after the news ticker, but previously saved ones still
+  // render where they always did.
+  {
+    key: "exams",
+    title: "آخرین اخبار سایت",
+    selector: "[data-home-news]",
+    legacy: true,
+  },
 ];
 
 const HOME_SECTIONS_KEY = "benamacademyHomeSections";
