@@ -76,6 +76,69 @@ function writeStorage(key, value) {
   APP_LOCAL_STORAGE?.setItem(key, JSON.stringify(value));
 }
 
+// Temporary browser-only fallback for the ads feature while its API is being
+// wired up. Keep the server first; only use localStorage for missing/offline
+// routes, never for authorization or validation errors.
+const LOCAL_ADS_STORAGE_KEY = "benamacademyAds";
+const ADS_FALLBACK_STATUSES = new Set([0, 404, 405, 501, 502, 503, 504]);
+
+function readLocalAds() {
+  const ads = readStorage(LOCAL_ADS_STORAGE_KEY, []);
+  return Array.isArray(ads) ? ads.filter((ad) => ad && typeof ad === "object") : [];
+}
+
+function writeLocalAds(ads) {
+  if (!APP_LOCAL_STORAGE) {
+    throw new ApiError("ذخیره‌سازی محلی در این مرورگر در دسترس نیست.", 0);
+  }
+  writeStorage(LOCAL_ADS_STORAGE_KEY, ads);
+}
+
+function canUseLocalAdsFallback(error) {
+  const config = typeof window !== "undefined" ? window.APP_CONFIG : null;
+  let explicitlyDisabled = config?.adsLocalFallback === false;
+  try {
+    explicitlyDisabled ||= APP_LOCAL_STORAGE?.getItem("benamacademyAdsLocalFallback") === "false";
+  } catch (e) {}
+  return !explicitlyDisabled && ADS_FALLBACK_STATUSES.has(Number(error?.status || 0));
+}
+
+function localAdsResult(value) {
+  return value && typeof value === "object"
+    ? { ...value, _localOnly: true }
+    : { success: true, _localOnly: true };
+}
+
+function createLocalAd(payload) {
+  const ads = readLocalAds();
+  const ad = {
+    ...payload,
+    id: payload.id || createId("ad"),
+    createdAt: payload.createdAt || Date.now(),
+  };
+  const index = ads.findIndex((item) => String(item.id) === String(ad.id));
+  if (index === -1) ads.unshift(ad);
+  else ads[index] = { ...ads[index], ...ad };
+  writeLocalAds(ads);
+  return localAdsResult(ad);
+}
+
+function updateLocalAd(id, payload) {
+  const ads = readLocalAds();
+  const index = ads.findIndex((item) => String(item.id) === String(id));
+  if (index === -1) {
+    throw new ApiError("تبلیغ محلی پیدا نشد.", 404);
+  }
+  ads[index] = { ...ads[index], ...payload, id: ads[index].id };
+  writeLocalAds(ads);
+  return localAdsResult(ads[index]);
+}
+
+function removeLocalAd(id) {
+  writeLocalAds(readLocalAds().filter((item) => String(item.id) !== String(id)));
+  return localAdsResult({ success: true });
+}
+
 /**
  * A strictly increasing counter for records created in the same millisecond.
  *
@@ -312,7 +375,14 @@ const appApi = {
      pages. The public banner script calls this; the admin tab uses
      appApi.admin.ads for create/update/delete. */
   ads: {
-    list: () => request("/ads"),
+    list: async () => {
+      try {
+        return await request("/ads");
+      } catch (error) {
+        if (!canUseLocalAdsFallback(error)) throw error;
+        return readLocalAds().filter((ad) => ad.active !== false);
+      }
+    },
   },
 
   /* ------------------------------------------------------------------------
@@ -447,18 +517,43 @@ const appApi = {
         request("/admin/settings", { method: "PUT", body: payload }),
     },
     ads: {
-      list: () => request("/admin/ads"),
-      create: (payload) =>
-        request("/admin/ads", { method: "POST", body: payload }),
-      update: (id, payload) =>
-        request("/admin/ads/" + encodeURIComponent(id), {
-          method: "PATCH",
-          body: payload,
-        }),
-      remove: (id) =>
-        request("/admin/ads/" + encodeURIComponent(id), {
-          method: "DELETE",
-        }),
+      list: async () => {
+        try {
+          return await request("/admin/ads");
+        } catch (error) {
+          if (!canUseLocalAdsFallback(error)) throw error;
+          return readLocalAds();
+        }
+      },
+      create: async (payload) => {
+        try {
+          return await request("/admin/ads", { method: "POST", body: payload });
+        } catch (error) {
+          if (!canUseLocalAdsFallback(error)) throw error;
+          return createLocalAd(payload);
+        }
+      },
+      update: async (id, payload) => {
+        try {
+          return await request("/admin/ads/" + encodeURIComponent(id), {
+            method: "PATCH",
+            body: payload,
+          });
+        } catch (error) {
+          if (!canUseLocalAdsFallback(error)) throw error;
+          return updateLocalAd(id, payload);
+        }
+      },
+      remove: async (id) => {
+        try {
+          return await request("/admin/ads/" + encodeURIComponent(id), {
+            method: "DELETE",
+          });
+        } catch (error) {
+          if (!canUseLocalAdsFallback(error)) throw error;
+          return removeLocalAd(id);
+        }
+      },
     },
   },
 };

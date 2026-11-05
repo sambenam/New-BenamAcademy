@@ -142,6 +142,28 @@ function readAdForm() {
   };
 }
 
+function persistAdWrite(promise, successMessage, label, rollback) {
+  Promise.resolve(promise)
+    .then((result) => {
+      if (result && result._localOnly) {
+        showToast(
+          "تبلیغ فقط در همین مرورگر ذخیره شد؛ پس از آماده‌شدن بک‌اند، دوباره از سرور استفاده می‌شود.",
+          "info",
+        );
+      } else {
+        showToast(successMessage, "success");
+      }
+    })
+    .catch((error) => {
+      if (typeof rollback === "function") rollback();
+      renderAdsTable();
+      const detail = error && error.message ? error.message : "خطای ناشناخته";
+      const status = error && error.status ? ` (HTTP ${error.status})` : "";
+      console.warn("admin ads: " + label + " failed", error);
+      showToast(`${label} ذخیره نشد${status}: ${detail}`, "error");
+    });
+}
+
 function saveAd(event) {
   event.preventDefault();
   const payload = readAdForm();
@@ -151,26 +173,33 @@ function saveAd(event) {
   }
 
   const id = document.getElementById("adId").value;
+  const previousAds = (appState.ads || []).map((ad) => ({ ...ad }));
   if (id) {
     const index = (appState.ads || []).findIndex(
       (a) => String(a.id) === String(id),
     );
     if (index !== -1) {
       appState.ads[index] = { ...appState.ads[index], ...payload };
-      persistAdmin(appApi.admin.ads.update(id, payload), "ویرایش تبلیغ");
-      showToast("تبلیغ به‌روزرسانی شد.", "success");
+      persistAdWrite(
+        appApi.admin.ads.update(id, payload),
+        "تبلیغ به‌روزرسانی شد.",
+        "ویرایش تبلیغ",
+        () => { appState.ads = previousAds; },
+      );
     }
   } else {
-    // Optimistic create, matching the panel's pattern. The mock normalises the
-    // same record on the way through appApi, so the two copies agree.
     const created = {
       ...payload,
       id: "ad-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8),
       createdAt: Date.now(),
     };
     appState.ads.unshift(created);
-    persistAdmin(appApi.admin.ads.create(created), "افزودن تبلیغ");
-    showToast("تبلیغ جدید افزوده شد.", "success");
+    persistAdWrite(
+      appApi.admin.ads.create(created),
+      "تبلیغ جدید افزوده شد.",
+      "افزودن تبلیغ",
+      () => { appState.ads = previousAds; },
+    );
   }
 
   renderAdsTable();
@@ -181,19 +210,27 @@ function deleteAd(id) {
   const ad = (appState.ads || []).find((a) => String(a.id) === String(id));
   if (!ad) return;
   if (!confirm(`تبلیغ «${ad.title || "بدون عنوان"}» حذف شود؟`)) return;
+  const previousAds = appState.ads.map((item) => ({ ...item }));
   appState.ads = appState.ads.filter((a) => String(a.id) !== String(id));
-  persistAdmin(appApi.admin.ads.remove(id), "حذف تبلیغ");
+  persistAdWrite(
+    appApi.admin.ads.remove(id),
+    "تبلیغ حذف شد.",
+    "حذف تبلیغ",
+    () => { appState.ads = previousAds; },
+  );
   renderAdsTable();
-  showToast("تبلیغ حذف شد.", "success");
 }
 
 function toggleAd(id) {
   const ad = (appState.ads || []).find((a) => String(a.id) === String(id));
   if (!ad) return;
+  const previousActive = ad.active;
   ad.active = ad.active === false ? true : false;
-  persistAdmin(
+  persistAdWrite(
     appApi.admin.ads.update(id, { active: ad.active }),
+    "وضعیت تبلیغ تغییر کرد.",
     "تغییر وضعیت تبلیغ",
+    () => { ad.active = previousActive; },
   );
   renderAdsTable();
 }
