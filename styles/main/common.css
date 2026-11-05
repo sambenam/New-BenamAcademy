@@ -358,6 +358,20 @@ body.home-page .home-news_item {
   border-inline-start: 1px solid rgba(132, 160, 195, .2);
 }
 
+body.home-page .home-news_empty {
+  flex: 1;
+  margin: 0;
+  padding: 12px;
+  color: #b9c5d6;
+  font-size: 13px;
+  text-align: center;
+}
+
+body.home-page .home-news_arrow[hidden],
+body.home-page .home-news_dots[hidden] {
+  display: none;
+}
+
 body.home-page .home-news_thumb {
   display: grid;
   place-items: center;
