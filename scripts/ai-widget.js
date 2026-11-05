@@ -1,45 +1,53 @@
 /* ============================================================================
-   پشتیبان هوشمند
+   دستیار بنام آکادمی
    ----------------------------------------------------------------------------
-   The widget used to be a closed loop: it printed a canned answer after a
-   one-second timeout and nothing left the page. A visitor could type a real
-   question, get a placeholder back, and no one would ever see it.
-
-   Now every question is also filed as a support message, so it lands in the
-   admin inbox next to the contact-form messages and can be answered by a
-   human. The automatic reply still shows immediately - the visitor is not
-   left waiting - but it is clearly labelled as automatic.
-
-   BACKEND NOTE: askAI() is the only place that needs changing when a real
-   assistant is wired up. Everything else already goes through appApi.
+   The browser sends each question to the site's authenticated assistant API.
+   The backend owns the conversation, AI provider credentials and any human
+   hand-off. If that endpoint is explicitly unavailable, the question is filed
+   through the existing support inbox instead of receiving a fake AI answer.
    ========================================================================== */
 
 const widget = document.getElementById("aiWidget");
 const toggleBtn = document.getElementById("aiToggleBtn");
-const closeBtn = document.getElementById("aiCloseBtn");
 const messagesEl = document.getElementById("aiMessages");
 const inputEl = document.getElementById("aiInput");
 const sendBtn = document.getElementById("aiSendBtn");
 
-/** Who is signed in, or null for a visitor. */
+let aiConversationId = null;
+let aiConversationOwner = null;
+
+/** Return a signed-in user only when the session has a usable identity. */
 function aiCurrentUser() {
   try {
     const raw = localStorage.getItem("benamacademySession");
     if (!raw) return null;
     const session = JSON.parse(raw);
-    return session && session.user ? session.user : null;
+    const user = session && session.user;
+    const hasIdentity = user && (String(user.id || "").trim() || String(user.email || "").trim());
+    return session && session.token && hasIdentity ? user : null;
   } catch (error) {
     return null;
   }
 }
 
-function openChat() {
-  widget.classList.add("open");
-  inputEl.focus();
-  refreshAiGate();
+function setChatOpen(isOpen) {
+  if (!widget) return;
+  widget.classList.toggle("open", isOpen);
+  if (toggleBtn) toggleBtn.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) {
+    refreshAiGate();
+    if (inputEl && !inputEl.disabled) inputEl.focus();
+  } else if (toggleBtn) {
+    toggleBtn.focus();
+  }
 }
+
+function openChat() {
+  setChatOpen(true);
+}
+
 function closeChat() {
-  widget.classList.remove("open");
+  setChatOpen(false);
 }
 
 if (toggleBtn) {
@@ -47,67 +55,118 @@ if (toggleBtn) {
     widget.classList.contains("open") ? closeChat() : openChat(),
   );
 }
-if (closeBtn) closeBtn.addEventListener("click", closeChat);
 
-function addMessage(text, who = "bot") {
+/** All dynamic chat content, including backend errors, is plain text. */
+function addMessage(text, who = "bot", extraClass = "") {
+  if (!messagesEl) return null;
   const div = document.createElement("div");
-  div.className = `ai-message ${who}`;
-  // Visitor text is inserted as text, never as markup - a question containing
-  // a tag must not be able to run anything in the page.
-  if (who === "user") {
-    div.textContent = text;
-  } else {
-    div.innerHTML = text;
-  }
+  div.className = `ai-message ${who}${extraClass ? " " + extraClass : ""}`;
+  div.textContent = String(text == null ? "" : text);
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return div;
 }
 
-/**
- * Signing in is required so a reply has somewhere to go.
- *
- * Answering a question needs an account to answer to. Rather than letting
- * someone type a long question and fail at the end, the composer is disabled
- * up front with a link to the sign-in page.
- */
 function refreshAiGate() {
-  if (!inputEl || !sendBtn) return;
+  if (!inputEl || !sendBtn || !messagesEl) return;
   const user = aiCurrentUser();
   const locked = !user;
 
   inputEl.disabled = locked;
   sendBtn.disabled = locked;
   inputEl.placeholder = locked
-    ? "برای گفتگو ابتدا وارد شوید"
+    ? "برای گفتگو ابتدا وارد حساب کاربری شوید"
     : "سوالت رو بنویس...";
 
   const existing = messagesEl.querySelector(".ai-login-hint");
   if (locked && !existing) {
     const hint = document.createElement("div");
     hint.className = "ai-message bot ai-login-hint";
-    hint.innerHTML =
-      "برای اینکه بتوانیم پاسخ را به پروفایل شما بفرستیم، لازم است " +
-      '<a href="sign-up.html">وارد حساب کاربری</a> شوید.';
+    hint.append("برای ارسال پرسش با حساب کاربری وارد شوید: ");
+    const link = document.createElement("a");
+    link.href = "sign-up.html";
+    link.textContent = "ورود / عضویت";
+    hint.append(link);
     messagesEl.appendChild(hint);
   } else if (!locked && existing) {
     existing.remove();
   }
+
+  if (!user) {
+    aiConversationId = null;
+    aiConversationOwner = null;
+  }
 }
 
-// ===== اینجا هوش مصنوعی واقعی رو وصل میکنی =====
-async function askAI(question) {
-  // BACKEND NOTE: replace this with the real assistant call, for example
-  //   const res = await appApi.support.ask({ question });
-  //   return res.answer;
-  await new Promise((r) => setTimeout(r, 700));
-  return (
-    "پرسش شما ثبت شد و برای کارشناسان ما ارسال شد. " +
-    "پاسخ در بخش «پیام‌های من» در پروفایل شما قرار می‌گیرد."
-  );
+function aiUserKey(user) {
+  return String(user.id || user.email || "").trim().toLowerCase();
+}
+
+function isAssistantEndpointUnavailable(error) {
+  return [404, 501, 503].includes(Number(error && error.status));
+}
+
+async function sendToHumanSupport(question, user) {
+  if (typeof appApi === "undefined" || !appApi.support || typeof appApi.support.sendMessage !== "function") {
+    throw new Error("سرویس پشتیبانی در دسترس نیست.");
+  }
+
+  await appApi.support.sendMessage({
+    name: user.name || "کاربر",
+    email: user.email || (user.id ? user.id + "@account.local" : ""),
+    subject: "ai",
+    message: question,
+    source: "ai",
+  });
+
+  return {
+    answer: "دستیار خودکار فعلاً در دسترس نیست. پرسش شما برای پاسخ‌گویی کارشناسان ثبت شد؛ پاسخ را در بخش «پیام‌های من» ببینید.",
+    needsHuman: true,
+  };
+}
+
+async function askAssistant(question, user) {
+  const owner = aiUserKey(user);
+  if (owner !== aiConversationOwner) {
+    aiConversationOwner = owner;
+    aiConversationId = null;
+  }
+
+  const assistantApi = typeof appApi !== "undefined" && appApi.assistant;
+  if (!assistantApi || typeof assistantApi.chat !== "function") {
+    return sendToHumanSupport(question, user);
+  }
+
+  let result;
+  try {
+    result = await assistantApi.chat({
+      message: question,
+      conversationId: aiConversationId,
+    });
+  } catch (error) {
+    if (isAssistantEndpointUnavailable(error)) {
+      return sendToHumanSupport(question, user);
+    }
+    throw error;
+  }
+
+  if (result && typeof result.conversationId === "string" && result.conversationId.trim()) {
+    aiConversationId = result.conversationId;
+  }
+
+  const answer = result && typeof result.answer === "string" ? result.answer.trim() : "";
+  if (answer) return result;
+  if (result && result.needsHuman === true) {
+    return {
+      ...result,
+      answer: "پرسش شما برای پاسخ‌گویی کارشناسان ارجاع شد؛ نتیجه را در بخش «پیام‌های من» ببینید.",
+    };
+  }
+  throw new Error("پاسخ معتبری از دستیار دریافت نشد.");
 }
 
 async function sendMessage() {
+  if (!inputEl || !sendBtn) return;
   const text = inputEl.value.trim();
   if (!text) return;
 
@@ -122,64 +181,53 @@ async function sendMessage() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
 
-  const typing = document.createElement("div");
-  typing.className = "ai-message bot";
-  typing.textContent = "...";
-  messagesEl.appendChild(typing);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-
-  // File it for a human first. If this fails the visitor needs to know their
-  // question did not reach anyone, rather than being reassured by a bot reply.
-  let failure = null;
+  const typing = addMessage("در حال آماده‌کردن پاسخ…", "bot", "ai-typing");
   try {
-    if (typeof appApi === "undefined" || !appApi.support) {
-      throw new Error("سرویس پیام در دسترس نیست.");
-    }
-    await appApi.support.sendMessage({
-      name: user.name || "کاربر",
-      // A session created by the dev helpers carries no email, and the
-      // endpoint requires one. Falling back to the account id keeps the
-      // message attached to a real person instead of being rejected.
-      email: user.email || (user.id ? user.id + "@account.local" : ""),
-      subject: "ai",
-      message: text,
-      source: "ai",
-    });
+    const result = await askAssistant(text, user);
+    if (typing) typing.remove();
+    addMessage(result.answer, "bot");
   } catch (error) {
-    // Report what actually went wrong. Blaming the connection for what is
-    // really a validation error sends the visitor off checking their wifi.
-    failure = error && error.message ? error.message : "ارسال پیام انجام نشد.";
+    if (typing) typing.remove();
+    const reason = error && error.message ? error.message : "خطای نامشخص";
+    addMessage("پرسش ارسال نشد: " + reason, "bot", "ai-error");
+  } finally {
+    refreshAiGate();
+    if (inputEl && !inputEl.disabled) inputEl.focus();
   }
-
-  const answer = failure
-    ? "ارسال پیام انجام نشد: " + failure
-    : await askAI(text);
-
-  typing.remove();
-  addMessage(answer, "bot");
-
-  inputEl.disabled = false;
-  sendBtn.disabled = false;
-  inputEl.focus();
 }
 
 if (sendBtn) sendBtn.addEventListener("click", sendMessage);
 if (inputEl) {
-  inputEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
+  inputEl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.isComposing) {
+      event.preventDefault();
+      sendMessage();
+    }
   });
 }
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("ai-suggestion")) {
-    if (!aiCurrentUser()) {
-      openChat();
-      refreshAiGate();
-      return;
-    }
-    inputEl.value = e.target.textContent;
-    sendMessage();
+document.addEventListener("click", (event) => {
+  const suggestion = event.target && typeof event.target.closest === "function"
+    ? event.target.closest(".ai-suggestion")
+    : null;
+  if (!suggestion) return;
+  if (!aiCurrentUser()) {
+    openChat();
+    refreshAiGate();
+    return;
   }
+  if (!inputEl || inputEl.disabled) return;
+  inputEl.value = suggestion.textContent.trim();
+  sendMessage();
 });
 
+window.addEventListener("storage", (event) => {
+  if (event.key === "benamacademySession") refreshAiGate();
+});
+window.addEventListener("focus", refreshAiGate);
+
+if (toggleBtn) {
+  toggleBtn.setAttribute("aria-controls", "aiChatWindow");
+  toggleBtn.setAttribute("aria-expanded", "false");
+}
 refreshAiGate();

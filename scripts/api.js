@@ -268,6 +268,12 @@ const appApi = {
     forgotPassword: (payload) =>
       request("/auth/forgot-password", { method: "POST", body: payload }),
   },
+  assistant: {
+    // Backend contract: authenticate from the session token, persist the
+    // conversation, call the configured AI agent, and return its answer.
+    chat: (payload) =>
+      request("/assistant/chat", { method: "POST", body: payload }),
+  },
   support: {
     sendMessage: (payload) =>
       request("/support/messages", { method: "POST", body: payload }),

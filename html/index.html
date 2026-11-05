@@ -708,35 +708,34 @@
 
   <!-- ai widget -->
   <div class="ai-widget" id="aiWidget">
-    <button class="ai-toggle-btn" id="aiToggleBtn" aria-label="چت آنلاین">
-      <i class="fa-solid fa-comments"></i>
-      <i class="fa-solid fa-xmark"></i>
+    <button class="ai-toggle-btn" id="aiToggleBtn" type="button" aria-label="گفتگوی دستیار" aria-controls="aiChatWindow" aria-expanded="false">
+      <i class="fa-solid fa-comments" aria-hidden="true"></i>
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
-    <div class="ai-chat-window" id="aiChatWindow">
+    <div class="ai-chat-window" id="aiChatWindow" role="region" aria-label="گفتگوی دستیار">
       <div class="ai-chat-header">
         <div class="ai-chat-header-info">
           <div class="ai-bot-avatar"><i class="fa-solid fa-robot"></i></div>
           <div class="ai-chat-header-text">
-            <h4>پشتیبان هوشمند بنام آکادمی</h4>
-            <span><span class="ai-status-dot"></span> آنلاین - پاسخ فوری</span>
+            <h4>دستیار بنام آکادمی</h4>
+            <span><span class="ai-status-dot" aria-hidden="true"></span> پرسش و پاسخ پشتیبانی</span>
           </div>
         </div>
       </div>
-      <div class="ai-messages" id="aiMessages">
+      <div class="ai-messages" id="aiMessages" role="log" aria-live="polite" aria-relevant="additions" aria-label="پیام‌های گفتگو">
         <div class="ai-message bot">
-          سلام! من پشتیبان هوشمند بنام آکادمیم 👋<br />هر سوالی درباره حسابداری
-          داری بپرس.
+          سلام! من دستیار بنام آکادمی هستم 👋 پرسشت را بنویس؛ اگر پاسخ خودکار در دسترس نباشد، آن را برای پشتیبانی انسانی می‌فرستم.
         </div>
-        <div class="ai-suggestions">
-          <button class="ai-suggestion">مالیات حقوق ۱۴۰۴ چقدره؟</button>
-          <button class="ai-suggestion">آموزش لیست بیمه</button>
-          <button class="ai-suggestion">نحوه ثبت سند حسابداری</button>
+        <div class="ai-suggestions" aria-label="پرسش‌های پیشنهادی">
+          <button type="button" class="ai-suggestion">مالیات حقوق ۱۴۰۵ چقدره؟</button>
+          <button type="button" class="ai-suggestion">آموزش لیست بیمه</button>
+          <button type="button" class="ai-suggestion">نحوه ثبت سند حسابداری</button>
         </div>
       </div>
       <div class="ai-input-area">
-        <input type="text" class="ai-input" id="aiInput" placeholder="سوالت رو بنویس..." autocomplete="off" />
-        <button class="ai-send-btn" id="aiSendBtn">
-          <i class="fa-solid fa-paper-plane"></i>
+        <input type="text" class="ai-input" id="aiInput" aria-label="پیام شما به دستیار" placeholder="سوالت رو بنویس..." autocomplete="off" maxlength="2000" />
+        <button class="ai-send-btn" id="aiSendBtn" type="button" aria-label="ارسال پیام">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
         </button>
       </div>
     </div>

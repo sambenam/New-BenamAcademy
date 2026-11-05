@@ -100,7 +100,9 @@
     padding: 11px 14px;
     border-radius: 16px;
     font-size: .88rem;
-    line-height: 1.8
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .ai-message.bot {
@@ -158,4 +160,31 @@
     background: #fff;
     border: 1px solid #e2e8f0;
     cursor: pointer
+}
+
+.ai-send-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    filter: grayscale(.25)
+}
+
+.ai-input:disabled {
+    cursor: not-allowed;
+    color: #64748b
+}
+
+.ai-toggle-btn:focus-visible,
+.ai-send-btn:focus-visible,
+.ai-suggestion:focus-visible,
+.ai-input:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-toggle-btn,
+    .ai-toggle-btn i,
+    .ai-chat-window {
+        transition: none
+    }
 }

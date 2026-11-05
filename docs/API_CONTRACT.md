@@ -112,10 +112,13 @@ localStorage.setItem("benamacademyApiBaseUrl", "https://api.example.com");
 
 | متد    | مسیر                    | بدنه                                | پاسخ                   |
 | ------ | ----------------------- | ----------------------------------- | ---------------------- |
+| `POST` | `/assistant/chat`       | `{ message, conversationId? }`       | `{ answer, conversationId, needsHuman? }` |
 | `POST` | `/support/messages`     | `{ name, email, subject, message }` | `{ success, message }` |
 | `POST` | `/newsletter/subscribe` | `{ email }`                         | `{ success, message }` |
 
-> **مهم:** پیامی که از این مسیر ثبت می‌شود باید در `GET /admin/messages` قابل مشاهده باشد. این اتصال قبلاً وجود نداشت و اصلاح شد.
+> **مهم:** پیامی که از مسیر پشتیبانی ثبت می‌شود باید در `GET /admin/messages` قابل مشاهده باشد. این اتصال قبلاً وجود نداشت و اصلاح شد.
+>
+> `/assistant/chat` باید از توکن احراز هویت‌شده هویت کاربر را سمت سرور استخراج کند؛ `userId`، ایمیل یا کلید سرویس هوش مصنوعی را از کلاینت نپذیرد. بک‌اند باید گفتگو را ذخیره کند، پاسخ agent را همراه `conversationId` برگرداند و در حالت `needsHuman: true` ارجاع پشتیبانی را ثبت کند. کلید ارائه‌دهندهٔ مدل فقط در بک‌اند نگه‌داری شود. فرانت‌اند در نبود صریح endpoint دستیار (`404`، `501` یا `503`) از مسیر `/support/messages` برای ارجاع انسانی استفاده می‌کند.
 
 ### پرداخت
 
