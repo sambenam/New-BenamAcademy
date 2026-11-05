@@ -208,6 +208,7 @@ body.home-page .new-courses_item:hover .new-courses_img {
 
 
 body.home-page .new-courses_link {
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: center;

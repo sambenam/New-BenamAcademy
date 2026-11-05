@@ -146,18 +146,26 @@ function buildCustomSection(section) {
             <h3 class="course-title">${esc(item.title)}</h3>
             <p class="course-description">${esc(item.excerpt || "توضیحی برای این آیتم ثبت نشده است.")}</p>
             <a href="single-post.html?id=${encodeURIComponent(item.id)}" class="popular-courses_link">
-              مشاهده توضیحات <i class="fas fa-arrow-left"></i>
+              مشاهده توضیحات <i class="fas fa-chevron-left"></i>
             </a>
           </div>
         </li>`,
     )
     .join("");
 
+  // Built-in section titles end in a gradient word ("دوره‌های جدید"); give
+  // custom sections the same treatment so they do not look out of place.
+  const titleWords = String(section.title || "").trim().split(/\s+/);
+  const lastWord = titleWords.length > 1 ? titleWords.pop() : "";
+  const titleHtml = lastWord
+    ? `${esc(titleWords.join(" "))} <span class="text-gradient">${esc(lastWord)}</span>`
+    : esc(section.title);
+
   el.innerHTML = `
     <div class="section-header">
       <h2 class="section-title">
         <i class="fas ${esc(section.icon || "fa-layer-group")}"></i>
-        ${esc(section.title)}
+        ${titleHtml}
       </h2>
       ${
         section.showAll === false

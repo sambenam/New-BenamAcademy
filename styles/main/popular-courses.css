@@ -223,6 +223,12 @@ body.home-page .popular-courses_items {
     list-style: none;
 }
 
+/* Pin the card button to the bottom. Cards with short descriptions (e.g.
+   admin-created custom sections) otherwise leave a hole under the button. */
+body.home-page .popular-courses_link {
+    margin-top: auto;
+}
+
 
 
 body.home-page .popular-courses_link:hover {
