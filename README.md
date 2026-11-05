@@ -9,8 +9,10 @@
 هر سرور استاتیکی کافی است. با افزونه Live Server در VS Code:
 
 ```
-پورت پیش‌فرض: 5501  (در .vscode/settings.json تنظیم شده)
-صفحه شروع:    html/index.html
+پورت Live Server: 5503  (در .vscode/settings.json تنظیم شده)
+صفحه شروع:       html/index.html
+
+برای پایتون، دستور نمونهٔ زیر مستقل است و از پورت 5501 استفاده می‌کند:
 ```
 
 یا با پایتون:
@@ -24,54 +26,40 @@ python3 -m http.server 5501
 
 ---
 
-## ساختار
+## ساختار پروژه
 
+```text
+index.html               ورودی ریشه؛ برای GitHub Pages به html/index.html هدایت می‌کند
+html/                    صفحات سایت و پنل مدیریت
+scripts/api.js            لایهٔ درخواست‌های HTTP و قرارداد appApi؛ mock server در ریپو نیست
+scripts/admin/            منطق پنل؛ فایل‌ها در یک scope سراسری بارگذاری می‌شوند، boot.js آخر
+scripts/admin-content/    منطق تب مدیریت محتوای پنل
+scripts/                 منطق صفحات، هدر/فوتر و داده‌های ثابت/محلی
+styles/header, main,
+       pages, footer/     استایل‌های مشترک و صفحه‌محور
+images/                  تصاویر و نشان‌ها
+files/                   محل فایل دانلودی؛ فایل‌ها به‌جز README و .gitignore در Git نیستند
+docs/                    قرارداد API، تحویل بک‌اند و راهنماها
+tests/                   تست‌ها و helpers؛ اجرا با npm test
 ```
-html/          صفحات — index, list-page, single-post, checkout, gateway,
-               receipt, user-profile, sign-up, support, about-us, admin
-scripts/       جاوااسکریپت
-  api.js            ★ تنها لایه دسترسی به داده — ۴۰۳ خط، همه‌اش مال بک‌اندکار
-  api-mock-*.js       سرور شبیه‌سازی‌شده (سه فایل) — روز اتصال حذف می‌شود
-  app-shell.js        هدر/فوتر مشترک، حالت تعمیر، اعمال تنظیمات سایت
-  admin/              پنل مدیریت — سیزده فایل، boot.js آخر
-  admin-content/      تب محتوای سایت — پنج فایل، content-table.js آخر
-  data.js, main-items.js, item-content.js, item-store.js   محتوای سایت
-files/         فایل‌های فروشی محصولات (در گیت نیستند)
-styles/
-  variables.css  متغیرهای مشترک (در main/)
-  main/        بخش‌های صفحه اصلی
-  pages/       استایل مخصوص هر صفحه
-  header/, footer/
-docs/
-  API_CONTRACT.md   ★ راهنمای تیم بک‌اند
-  نقشه-فایل‌ها.md   ★ دنبال چه چیزی می‌گردی؟ کدام فایل؟
-tests/
-  file-split.test.js   قوانین چندفایلی بودن پروژه
-  integration.test.js  تست جریان داده
-```
+
+این ریپو فرانت‌اند است و فولدر بک‌اند ندارد. مسیرها را فعلاً جابه‌جا نکنید: صفحه‌ها و تست‌ها به مسیرهای نسبی و ترتیب بارگذاری اسکریپت‌های کلاسیک وابسته‌اند. نقشهٔ جزئی‌تر: [`docs/نقشه-فایل‌ها.md`](docs/نقشه-فایل‌ها.md).
 
 ---
 
-## معماری داده
+## ارتباط فرانت‌اند و بک‌اند
 
-تمام خواندن و نوشتن داده از یک نقطه عبور می‌کند: `appApi` در `scripts/api.js`.
-
-```
-صفحات سایت  ─┐
-              ├─→  appApi  ─→  mock (localStorage)  ← امروز
-پنل ادمین   ─┘              └→  سرور واقعی (fetch)  ← با یک تغییر تنظیمات
-```
-
-هیچ فایلی خارج از `api.js` مستقیماً `localStorage` برای داده‌های دامنه صدا نمی‌زند. این یعنی وصل کردن بک‌اند فقط تغییر پیکربندی است:
+درخواست‌های API از `appApi` در `scripts/api.js` با `fetch` ارسال می‌شوند. هیچ فایل `api-mock-*.js` در ریپوی فعلی وجود ندارد؛ `apiMode` هم در حال حاضر mock/real را سوییچ نمی‌کند. آدرس پایه را با تنظیم `apiBaseUrl` مشخص کنید؛ اگر خالی باشد، درخواست‌ها به همان origin می‌روند.
 
 ```js
 window.APP_CONFIG = {
-  apiMode: "real",
   apiBaseUrl: "https://api.example.com",
 };
 ```
 
-جزئیات کامل اندپوینت‌ها: [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)
+`appApi` مرز اصلی درخواست‌های HTTP است، اما هنوز چند وضعیت نمایشی/محلی (از جمله سبد خرید، نشست توسعه، محتوای ثابت و تنظیمات منوی هدر) مستقیماً از `localStorage` یا `sessionStorage` خوانده می‌شوند. این‌ها به‌صورت خودکار با اتصال `api.js` به دیتابیس منتقل نمی‌شوند؛ فهرست و نکات مهاجرت را در [`docs/تحویل-به-بک‌اند.md`](docs/تحویل-به-بک‌اند.md) ببینید.
+
+قرارداد endpointها: [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)
 
 ---
 
@@ -210,31 +198,12 @@ html/admin.html?dev=1
 ## تست
 
 ```bash
-node tests/integration.test.js      # ۳۶ تست - جریان داده بین سایت و پنل
-node tests/header-menu.test.js      # ۲۱ تست - منوی هدر بر اساس نقش کاربر
-node tests/admin-ui.test.js         # ۳۶ تست - رفتار پنل: زنگوله، مودال، آیکون‌ها
-node tests/permissions.test.js      # ۲۵ تست - سطوح دسترسی در تب کاربران
-node tests/staff-access.test.js     # ۴۸ تست - تب مدیریت دسترسی‌ها
-node tests/dev-session.test.js      # ۱۷ تست - سشن حالت توسعه
-node tests/products.test.js         # ۳۹ تست - تب محصولات
-node tests/product-content-sync.test.js  # ۲۴ تست - اتصال محصول به مطلب
-node tests/file-source.test.js      # ۱۰۷ تست - منبع فایل، تصویر و بررسی لینک
-node tests/orders.test.js           # ۵۹ تست - سفارشات، داشبورد، تاریخچه و خروجی CSV
-node tests/maintenance.test.js      # ۳۷ تست - حالت تعمیرات
-node tests/site-content.test.js     # ۶۴ تست - محتوای سایت، فایل‌ها و همگام‌سازی
-node tests/home-sections.test.js    # ۴۵ تست - سکشن‌های سفارشی صفحه اصلی
+npm test
 ```
 
-### راهنمای مدیر و ادمین
+وابستگی تست `jsdom` در `package.json` تعریف شده است. تست‌ها رفتار فرانت‌اند را بررسی می‌کنند و جایگزین تست اتصال به backend واقعی نیستند.
 
-برای اینکه بدانید فایل و ویدیو را کجا آپلود کنید:
-[`docs/راهنمای-افزودن-محصول.md`](docs/راهنمای-افزودن-محصول.md)
-
-دو تست آخر به `jsdom` نیاز دارند:
-
-```bash
-npm install --no-save jsdom
-```
+برای راهنمای آپلود فایل و ویدیو، به `docs/راهنمای-افزودن-محصول.md` مراجعه کنید.
 
 ### نکته درباره SRI
 
@@ -253,10 +222,11 @@ curl -s https://cdnjs.cloudflare.com/ajax/libs/font-awesome/<نسخه>/css/all.m
 
 ## قراردادهای کد
 
-- **داده:** همیشه از `appApi`، هرگز `localStorage` مستقیم
-- **متغیرهای CSS:** از `styles/main/variables.css` — رنگ ثابت ننویسید
-- **زبان:** تمام صفحات `lang="fa" dir="rtl"`
-- **نقاط اتصال بک‌اند:** با کامنت `BACKEND NOTE` علامت‌گذاری شده‌اند
+- **درخواست HTTP:** از `appApi` استفاده کنید؛ دادهٔ مرورگری فعلی را همه‌جا پشت این لایه فرض نکنید.
+- **state محلی:** تعدادی قابلیت هنوز مستقیم از `localStorage`/`sessionStorage` استفاده می‌کنند؛ پیش از مهاجرت، `docs/تحویل-به-بک‌اند.md` را ببینید.
+- **متغیرهای CSS:** از `styles/main/variables.css` استفاده کنید.
+- **زبان:** صفحات فارسی `lang="fa" dir="rtl"` دارند.
+- **نقاط اتصال بک‌اند:** با کامنت `BACKEND NOTE` علامت‌گذاری شده‌اند.
 
 ```bash
 grep -rn "BACKEND NOTE" scripts/

@@ -7,8 +7,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "test": "node tests/run-all.js",
-    "test:contract": "node tests/api-contract.test.js"
+    "test": "node tests/run-all.js"
   },
   "devDependencies": {
     "jsdom": "^29.1.1"

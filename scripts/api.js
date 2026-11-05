@@ -1,33 +1,23 @@
 /**
- * appApi — the one and only way this project touches data.
+ * appApi — the frontend HTTP API adapter.
  *
- * FOR THE BACKEND DEVELOPER: this file is yours. It is short on purpose.
- * Everything below is either the fetch() call that talks to your server, or
- * the list of routes the front-end expects. There is no business logic here.
+ * BACKEND HANDOFF
+ * ===============
+ * This repository contains no backend and no api-mock-*.js modules. Every
+ * appApi method below uses fetch. Set window.APP_CONFIG.apiBaseUrl before
+ * loading this file; if it is empty, requests go to the current origin.
+ * `apiMode` is retained as a legacy config value but does not switch adapters.
  *
- * SWITCHING TO THE REAL SERVER
- * ============================
- * Two lines, in every HTML page, in a <script> before this file:
+ * appApi is the main boundary for HTTP requests, not for every piece of
+ * browser state: several demo/UI features still read or write localStorage
+ * directly. See docs/تحویل-به-بک‌اند.md before treating browser storage as
+ * authoritative.
  *
- *     window.APP_CONFIG = {
- *       apiMode: "real",
- *       apiBaseUrl: "https://api.example.com",
- *     };
- *
- * Then delete the three <script src="../scripts/api-mock-*.js"> tags.
- * Nothing else changes. Every page in the site calls appApi and nothing else,
- * so no page knows or cares where the data comes from.
- *
- * Until then the mock in api-mock-*.js answers every route from localStorage,
- * which is how the whole front-end was built and tested without a server.
- *
- * WHAT YOU HAVE TO IMPLEMENT
- * ==========================
- * The `appApi` object at the bottom of this file is the complete list of
- * routes, grouped by area. docs/API_CONTRACT.md describes the request and
- * response shape of each one; api-mock-site.js and api-mock-admin.js are a
- * working reference
- * implementation you can read to see exactly what the front-end expects.
+ * WHAT THE BACKEND DEVELOPER NEEDS
+ * ================================
+ * The `appApi` object at the bottom of this file lists routes and payloads.
+ * docs/API_CONTRACT.md is the request/response contract. It is not a mock
+ * server or a replacement for server-side validation and authorization.
  *
  * FOUR SECURITY RULES THAT ARE NOT OPTIONAL
  * =========================================
