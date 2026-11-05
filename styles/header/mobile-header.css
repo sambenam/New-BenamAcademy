@@ -60,9 +60,17 @@ a {
     font-size: 19px;
 }
 
-/* Website Logo */
+/* Website Logo — the icon always sits to the RIGHT of the site name, the
+   same arrangement as the desktop brand, on every page and every width. */
 .website-logo {
     padding: 0.5rem 0 0 0.75rem;
+}
+
+.website-logo a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
 }
 
 .website-logo_img {
@@ -70,6 +78,19 @@ a {
     height: 40px;
     object-fit: contain;
     border-radius: 50%;
+}
+
+.website-logo_name {
+    color: #f4f7ff;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .website-logo_name {
+        font-size: 15px;
+    }
 }
 
 /* Mobile Menu - Glass Effect */
