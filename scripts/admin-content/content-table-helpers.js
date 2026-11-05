@@ -84,6 +84,44 @@ function getContentCategoryGroups(options) {
     };
   });
 
+  const headerLabels = typeof window !== "undefined" && window.BenamHeaderLabels && window.BenamHeaderLabels.read
+    ? window.BenamHeaderLabels.read()
+    : {};
+  const menuNames = {
+    forStudents: "برای دانشجویان",
+    courses: "دوره‌ها",
+    regulations: "قوانین و مقررات",
+    news: "اخبار",
+  };
+  const groupNames = {
+    forStudents: "group-students",
+    courses: "group-courses",
+    regulations: "group-regulations",
+    news: "group-news",
+  };
+  Object.keys(groupNames).forEach(function (menuKey) {
+    const group = groups.find(function (entry) { return entry.id === groupNames[menuKey]; });
+    if (group) group.title = group.title.replace(menuNames[menuKey], headerLabels[menuKey] || menuNames[menuKey]);
+  });
+
+  if (typeof getHeaderCustomCategoryRecords === "function") {
+    getHeaderCustomCategoryRecords().forEach(function (record) {
+      if (typeof siteData === "undefined" || !siteData[record.categoryKey]) return;
+      let group = groups.find(function (entry) { return entry.id === record.groupId; });
+      if (!group) {
+        group = { id: record.groupId, title: record.groupTitle, categories: [] };
+        const homeIndex = groups.findIndex(function (entry) { return entry.id === "group-home"; });
+        if (homeIndex === -1) groups.push(group);
+        else groups.splice(homeIndex, 0, group);
+      } else if (record.groupId.indexOf("group-custom-header-") === 0) {
+        group.title = record.groupTitle;
+      }
+      if (group.categories.indexOf(record.categoryKey) === -1) {
+        group.categories.push(record.categoryKey);
+      }
+    });
+  }
+
   if (settings.includeCustom && typeof loadHomeSections === "function") {
     const customCategories = loadHomeSections()
       .map(function (section) {
@@ -145,11 +183,11 @@ function populateCategorySelect() {
 
   let htmlOptions = "";
   groups.forEach((group) => {
-    htmlOptions += `<optgroup label="${group.title}">`;
+    htmlOptions += `<optgroup label="${escapeAttr(group.title)}">`;
     group.categories.forEach((catKey) => {
       const category = siteData[catKey];
       if (category) {
-        htmlOptions += `<option value="${catKey}">${category.title} (${catKey})</option>`;
+        htmlOptions += `<option value="${escapeAttr(catKey)}">${escapeHtml(category.title)} (${escapeHtml(catKey)})</option>`;
       }
     });
     htmlOptions += `</optgroup>`;

@@ -189,6 +189,7 @@
       try { return new URL(item.href, window.location.href).searchParams.get("cat"); }
       catch (error) { return null; }
     }).filter(Boolean));
+    if (typeof siteData !== "undefined") Object.keys(siteData).forEach((categoryKey) => used.add(categoryKey));
     let key = base;
     let suffix = 2;
     while (used.has(key)) key = base + "-" + suffix++;
