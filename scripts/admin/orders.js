@@ -173,21 +173,30 @@ function openOrderDetailModal(orderId) {
     "detailOrderDownloadContainer",
   );
   if (downloadContainer) {
-    let htmlButtons = `
-      <button type="button" class="btn-primary" onclick="downloadSingleOrderInvoice('${order.id}')" style="background: #10b981; border-color: #10b981; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; border: none;">
-        <i class="fas fa-file-excel"></i> دانلود فاکتور اکسل (CSV)
-      </button>
-    `;
+    const invoice = document.createElement("button");
+    invoice.type = "button";
+    invoice.className = "btn-primary";
+    invoice.style.cssText = "background:#10b981;border-color:#10b981;padding:10px 20px;border-radius:8px;font-weight:bold;display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;border:none;";
+    invoice.innerHTML = '<i class="fas fa-file-excel"></i> دانلود فاکتور اکسل (CSV)';
+    invoice.addEventListener("click", () => downloadSingleOrderInvoice(order.id));
+    downloadContainer.replaceChildren(invoice);
 
     if (fileUrl && fileUrl !== "#") {
-      htmlButtons += `
-        <a href="${fileUrl}" download class="btn-primary" style="background: #007aff; border-color: #007aff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-right: 10px;">
-          <i class="fas fa-file-arrow-down"></i> دانلود فایل اصلی محصول
-        </a>
-      `;
+      try {
+        const candidate = new URL(String(fileUrl), window.location.href);
+        if (candidate.protocol === "http:" || candidate.protocol === "https:") {
+          const download = document.createElement("a");
+          download.href = candidate.href;
+          download.download = "";
+          download.className = "btn-primary";
+          download.style.cssText = "background:#007aff;border-color:#007aff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-right:10px;";
+          download.innerHTML = '<i class="fas fa-file-arrow-down"></i> دانلود فایل اصلی محصول';
+          downloadContainer.appendChild(download);
+        }
+      } catch (e) {
+        // A malformed or non-web file URL is not made into an active link.
+      }
     }
-
-    downloadContainer.innerHTML = htmlButtons;
   }
 
   openModal("orderDetailModal");
@@ -215,16 +224,16 @@ function renderOrdersTable() {
 
         return `
         <tr>
-            <td>${toPersianDigits(order.id)}</td>
+            <td>${escapeHtml(toPersianDigits(order.id))}</td>
             <td>${escapeHtml(order.customer || "—")}</td>
             <td>${escapeHtml(order.product || "—")}</td>
-            <td style="font-weight: bold; color: ${amountColour};">${formatOrderAmount(order.amount)}</td>
-            <td>${toPersianDigits(order.date || "—")}</td>
-            <td><span class="status ${order.status}">${getStatusText(order.status)}</span>
+            <td style="font-weight: bold; color: ${amountColour};">${escapeHtml(formatOrderAmount(order.amount))}</td>
+            <td>${escapeHtml(toPersianDigits(order.date || "—"))}</td>
+            <td><span class="status ${["success", "pending", "failed", "cancelled"].includes(order.status) ? order.status : "pending"}">${escapeHtml(getStatusText(order.status))}</span>
               ${order.failureReason ? `<small class="order-reason">${escapeHtml(order.failureReason)}</small>` : ""}
             </td>
             <td>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer;" onclick="openOrderDetailModal('${safeId}')">بررسی جزئیات</button>
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer;" onclick="${escapeAttr(`openOrderDetailModal(${JSON.stringify(String(order.id))})`)}">بررسی جزئیات</button>
             </td>
         </tr>`;
       })

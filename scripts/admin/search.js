@@ -70,9 +70,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
       subtitle: user.email || "—",
       badge: user.status || "",
       // Only a manager can open the edit sheet; others just land on the tab.
-      action: manager
-        ? `editUser('${String(user.id).replace(/'/g, "\\'")}')`
-        : null,
+      action: manager ? "editUser" : null,
+      targetId: String(user.id),
     });
   });
 
@@ -86,9 +85,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
       title: user.name || "بدون نام",
       subtitle: (user.role || "—") + " · " + (user.email || "—"),
       badge: user.status || "",
-      action: manager
-        ? `editStaff('${String(user.id).replace(/'/g, "\\'")}')`
-        : null,
+      action: manager ? "editStaff" : null,
+      targetId: String(user.id),
     });
   });
 
@@ -108,7 +106,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
       title: product.name || "بدون نام",
       subtitle: product.id,
       badge: formatProductPrice(product.price),
-      action: `editProduct('${String(product.id).replace(/'/g, "\\'")}')`,
+      action: "editProduct",
+      targetId: String(product.id),
     });
   });
 
@@ -129,7 +128,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
       title: order.id,
       subtitle: (order.customer || "—") + " · " + (order.product || "—"),
       badge: getStatusText(order.status),
-      action: `openOrderDetailModal('${String(order.id).replace(/'/g, "\\'")}')`,
+      action: "openOrderDetailModal",
+      targetId: String(order.id),
     });
   });
 
@@ -146,7 +146,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
           title: row.title || "بدون عنوان",
           subtitle: row.categoryTitle || row.id,
           badge: "",
-          action: `openContentEditor('${String(row.id).replace(/'/g, "\\'")}')`,
+          action: "openContentEditor",
+          targetId: String(row.id),
         });
       });
     } catch (e) {
@@ -163,7 +164,8 @@ function globalSearchResults(rawQuery, limitPerGroup) {
       title: message.sender || "ناشناس",
       subtitle: String(message.text || "").slice(0, 60),
       badge: isUnreadMessage(message) ? "خوانده‌نشده" : "",
-      action: `openReadMessageModal('${String(message.id).replace(/'/g, "\\'")}')`,
+      action: "openReadMessageModal",
+      targetId: String(message.id),
     });
   });
 
@@ -223,9 +225,9 @@ function renderGlobalSearch(rawQuery) {
             : "";
           return (
             '<button type="button" class="global-search__item"' +
-            ' data-action="' +
-            escapeHtml(item.action || "") +
-            '"' +
+            (item.action
+              ? ' data-action="' + escapeHtml(item.action) + '" data-target-id="' + escapeHtml(item.targetId || "") + '"'
+              : "") +
             ' data-view="' +
             escapeHtml(group.meta.view) +
             '">' +
@@ -274,6 +276,7 @@ function runGlobalSearchItem(button) {
   if (!button) return;
   const view = button.getAttribute("data-view");
   const action = button.getAttribute("data-action");
+  const targetId = button.getAttribute("data-target-id");
 
   if (view) switchView(view);
   closeGlobalSearch();
@@ -281,15 +284,21 @@ function runGlobalSearchItem(button) {
   const input = document.getElementById("globalSearch");
   if (input) input.value = "";
 
-  if (action) {
+  const actions = {
+    editUser: typeof editUser === "function" ? editUser : null,
+    editStaff: typeof editStaff === "function" ? editStaff : null,
+    editProduct: typeof editProduct === "function" ? editProduct : null,
+    openOrderDetailModal:
+      typeof openOrderDetailModal === "function" ? openOrderDetailModal : null,
+    openContentEditor:
+      typeof openContentEditor === "function" ? openContentEditor : null,
+    openReadMessageModal:
+      typeof openReadMessageModal === "function" ? openReadMessageModal : null,
+  };
+  const handler = actions[action];
+  if (handler && targetId !== null) {
     // Let the view finish painting before its modal opens on top.
-    setTimeout(function () {
-      try {
-        window.eval(action);
-      } catch (e) {
-        console.warn("global search: " + e.message);
-      }
-    }, 60);
+    setTimeout(() => handler(targetId), 60);
   }
 }
 

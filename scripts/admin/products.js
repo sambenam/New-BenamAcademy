@@ -34,7 +34,7 @@ function formatProductPrice(price) {
     }
     return toPersianDigits(cleanNum.toLocaleString()) + " تومان";
   }
-  return toPersianDigits(String(price || "رایگان"));
+  return escapeHtml(toPersianDigits(String(price || "رایگان")));
 }
 
 function renderProductsTable() {
@@ -60,22 +60,23 @@ function renderProductsTable() {
           ? '<span class="product-type-badge product-type-badge--video"><i class="fas fa-play"></i> ویدیو</span>'
           : '<span class="product-type-badge product-type-badge--file"><i class="fas fa-file"></i> فایل</span>';
 
-        const safeId = String(prod.id).replace(/'/g, "\\'");
+        const editAction = escapeAttr(`editProduct(${JSON.stringify(String(prod.id))})`);
+        const deleteAction = escapeAttr(`deleteProduct(${JSON.stringify(String(prod.id))})`);
 
         return `
         <tr>
-            <td><img src="${prod.img || "../images/ravin.png"}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" alt=""></td>
+            <td><img src="${escapeAttr(prod.img || "../images/ravin.png")}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" alt=""></td>
             <td style="font-weight: 500;">${escapeHtml(prod.name || "بدون نام")}
               <small class="product-owner">${escapeHtml(articleTitleFor(prod))}</small>
             </td>
             <td>${typeBadge}
-              <span class="status pending" style="background: rgba(0, 122, 255, 0.1); color: var(--primary); font-size: 11px; font-weight: bold; border-radius: 6px; padding: 4px 8px;">${String(prod.category || "FILE").toUpperCase()}</span>
+              <span class="status pending" style="background: rgba(0, 122, 255, 0.1); color: var(--primary); font-size: 11px; font-weight: bold; border-radius: 6px; padding: 4px 8px;">${escapeHtml(String(prod.category || "FILE").toUpperCase())}</span>
             </td>
             <td style="font-weight: bold; color: var(--success);">${formatProductPrice(prod.price)}</td>
             <td><code>${escapeHtml(prod.id)}</code></td>
             <td>
-                <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px; cursor: pointer; border-radius: 6px;" onclick="editProduct('${safeId}')">ویرایش</button>
-                <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px; color: var(--danger); border-color: rgba(255,59,48,0.2); background: rgba(255,59,48,0.05); cursor: pointer; border-radius: 6px;" onclick="deleteProduct('${safeId}')">حذف</button>
+                <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px; cursor: pointer; border-radius: 6px;" onclick="${editAction}">ویرایش</button>
+                <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px; color: var(--danger); border-color: rgba(255,59,48,0.2); background: rgba(255,59,48,0.05); cursor: pointer; border-radius: 6px;" onclick="${deleteAction}">حذف</button>
             </td>
         </tr>`;
       })

@@ -90,6 +90,9 @@ function visibleNotifications() {
   return appState.notifications.filter(canReceiveNotification);
 }
 let bellTimer = null;
+let notificationIdHighWater = 0;
+let notificationReconcileDepth = 0;
+let notificationBatchChanged = false;
 function pushAdminNotification(type, title, desc, details = {}) {
   const theme = notificationThemes[type] || "blue";
   // Recording an event and being allowed to see it are two different things.
@@ -97,8 +100,10 @@ function pushAdminNotification(type, title, desc, details = {}) {
   // type, so an admin editing their own profile created no record at all -
   // and the managers who were supposed to be told never found out. The event
   // is always stored; visibleNotifications() decides who sees it.
+  const now = Date.now();
+  notificationIdHighWater = Math.max(now, notificationIdHighWater + 1);
   const notification = {
-    id: Date.now(),
+    id: notificationIdHighWater,
     type,
     theme,
     title,
@@ -116,8 +121,14 @@ function pushAdminNotification(type, title, desc, details = {}) {
   if (canReceiveNotification(notification)) {
     activateNotificationBell(theme);
   }
-  renderNotificationDropdownItems();
-  renderNotificationsPage();
+  if (notificationReconcileDepth) {
+    notificationBatchChanged = true;
+  } else {
+    renderNotificationDropdownItems();
+    if (document.getElementById("view-notifications")?.classList.contains("active")) {
+      renderNotificationsPage();
+    }
+  }
   return notification;
 }
 // Backend integration point: map the API response to { type, title, desc, details }.
@@ -225,22 +236,6 @@ function notificationIcon(type) {
           : "fa-flag";
 }
 
-/** Safely hand a notification object to an inline onclick. */
-function notificationPayload(n) {
-  return JSON.stringify({
-    id: n.id,
-    type: n.type,
-    theme: n.theme || "blue",
-    title: n.title,
-    desc: n.desc,
-    time: n.time,
-    createdAt: n.createdAt || null,
-    unread: !!n.unread,
-    fresh: !!n.fresh,
-    details: n.details || {},
-  }).replace(/"/g, "&quot;");
-}
-
 function renderNotificationsPage() {
   const container = document.getElementById("notificationsPageList");
   if (!container) return;
@@ -255,13 +250,14 @@ function renderNotificationsPage() {
     return;
   }
 
+  const allowedThemes = new Set(["green", "blue", "yellow", "red", "black"]);
   container.innerHTML = items
     .map((n) => {
-      return `<div class="notification-item notification-${n.theme || "blue"}" style="cursor: pointer;"
-      onclick="openNotificationDetails(${notificationPayload(n)})">
+      const theme = allowedThemes.has(n.theme) ? n.theme : "blue";
+      return `<div class="notification-item notification-${theme}" style="cursor: pointer;" data-open-notification="${escapeAttr(String(n.id))}">
       <i class="fas ${notificationIcon(n.type)}"></i>
-      <div><strong>${escapeHtml(n.title)}</strong><p>${notificationCardSummary(n)}</p>
-        <small>${formatNotificationTime(n.createdAt, n.time)}</small></div>
+      <div><strong>${escapeHtml(n.title || "اعلان")}</strong><p>${escapeHtml(notificationCardSummary(n))}</p>
+        <small>${escapeHtml(formatNotificationTime(n.createdAt, n.time))}</small></div>
       <button type="button" class="notif-delete"
               title="حذف این اعلان" aria-label="حذف این اعلان"
               data-delete-notification="${escapeAttr(String(n.id))}">
@@ -296,29 +292,36 @@ function loadAnnouncedIds() {
 }
 
 let announcedEvents = loadAnnouncedIds();
+const announcedEventSets = {
+  orders: new Set(Array.isArray(announcedEvents.orders) ? announcedEvents.orders.map(String) : []),
+  users: new Set(Array.isArray(announcedEvents.users) ? announcedEvents.users.map(String) : []),
+  reports: new Set(Array.isArray(announcedEvents.reports) ? announcedEvents.reports.map(String) : []),
+};
 
 function saveAnnouncedIds() {
   try {
-    // Keep the ledger bounded; only the newest ids can still be "new".
-    const trim = (list) => (Array.isArray(list) ? list.slice(-500) : []);
-    localStorage.setItem(
-      ANNOUNCED_KEY,
-      JSON.stringify({
-        orders: trim(announcedEvents.orders),
-        users: trim(announcedEvents.users),
-        reports: trim(announcedEvents.reports),
-      }),
-    );
+    // Retain every seen ID. Truncating this ledger caused older events to be
+    // announced again once their IDs fell out of the 500-entry window.
+    announcedEvents = {
+      orders: Array.from(announcedEventSets.orders),
+      users: Array.from(announcedEventSets.users),
+      reports: Array.from(announcedEventSets.reports),
+    };
+    localStorage.setItem(ANNOUNCED_KEY, JSON.stringify(announcedEvents));
   } catch (e) {}
 }
 
 function wasAnnounced(bucket, id) {
-  const list = announcedEvents[bucket] || [];
-  return list.indexOf(String(id)) !== -1;
+  return !!announcedEventSets[bucket]?.has(String(id));
 }
 
 function markAnnounced(bucket, id) {
-  (announcedEvents[bucket] ||= []).push(String(id));
+  if (!announcedEventSets[bucket]) announcedEventSets[bucket] = new Set();
+  const value = String(id);
+  if (announcedEventSets[bucket].has(value)) return;
+  announcedEventSets[bucket].add(value);
+  announcedEvents[bucket] ||= [];
+  announcedEvents[bucket].push(value);
 }
 
 /** One order -> one notification, worded by how the payment ended. */
@@ -446,17 +449,22 @@ function loadAbuseReports() {
  * Safe to call repeatedly - the ledger stops duplicates.
  */
 function reconcileNotifications() {
-  const before = appState.notifications.length;
+  notificationReconcileDepth++;
+  notificationBatchChanged = false;
+  try {
+    // Oldest first, so the newest event ends up at the top of the list.
+    (appState.orders || []).slice().reverse().forEach(announceOrder);
+    (appState.users || []).forEach(announceUser);
+    loadAbuseReports().slice().reverse().forEach(announceReport);
+  } finally {
+    notificationReconcileDepth = Math.max(0, notificationReconcileDepth - 1);
+  }
 
-  // Oldest first, so the newest event ends up at the top of the list.
-  (appState.orders || []).slice().reverse().forEach(announceOrder);
-  (appState.users || []).forEach(announceUser);
-  loadAbuseReports().slice().reverse().forEach(announceReport);
-
-  if (appState.notifications.length !== before) {
-    persistAdminNotifications();
+  if (notificationBatchChanged) {
     renderNotificationDropdownItems();
-    renderNotificationsPage();
+    if (document.getElementById("view-notifications")?.classList.contains("active")) {
+      renderNotificationsPage();
+    }
   }
   saveAnnouncedIds();
 }
@@ -499,6 +507,8 @@ function initNotifications() {
     });
   }
 
+  updateNotificationBadge();
+
   if (markAllBtn) {
     markAllBtn.addEventListener("click", () => {
       dropdown.classList.remove("active");
@@ -512,65 +522,73 @@ function initNotifications() {
 
 function openNotificationDetails(notification) {
   if (!notification) return;
-  const d = notification.details || {};
+  const rawDetails = notification.details;
+  const details = rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)
+    ? rawDetails
+    : {};
   const schema = notificationDetailSchemas[notification.type] || {
     label: "اعلان",
     icon: "fa-bell",
   };
-
-  document.getElementById("notifDetailTitle").textContent =
-    notification.title || "اعلان سیستم";
-  document.getElementById("notifDetailTime").textContent =
-    formatNotificationTime(notification.createdAt, notification.time) +
-    " · " +
-    (notification.type === "purchase"
-      ? "سفارش و پرداخت"
-      : notification.type === "user"
-        ? "ثبت‌نام کاربر"
-        : notification.type === "staff"
-          ? "تغییر پروفایل"
-          : notification.type === "report"
-            ? "گزارش تخلف"
-            : notification.type === "deletion"
-              ? "حذف حساب"
-              : "اعلان");
-
+  const allowedThemes = new Set(["green", "blue", "yellow", "red", "black"]);
+  const theme = allowedThemes.has(notification.theme) ? notification.theme : "blue";
+  const title = document.getElementById("notifDetailTitle");
+  const time = document.getElementById("notifDetailTime");
   const hero = document.getElementById("notifDetailHero");
-  hero.className =
-    "notification-detail-hero notification-detail-hero--" +
-    (notification.theme || "blue");
-  hero.innerHTML = `<i class="fas ${schema.icon || "fa-bell"}" id="notifDetailIcon" style="font-size: 24px;"></i><div><small>نوع اعلان</small><strong id="notifDetailType" style="font-size: 15px;">${schema.label}</strong></div>`;
+  const desc = document.getElementById("notifDetailDesc");
+  const dynamic = document.getElementById("notifDetailDynamic");
+  if (!title || !time || !hero || !desc || !dynamic) return;
 
-  document.getElementById("notifDetailDesc").textContent =
-    notification.desc || "—";
+  title.textContent = notification.title || "اعلان سیستم";
+  time.textContent = formatNotificationTime(notification.createdAt, notification.time) +
+    " · " + schema.label;
+  hero.className = `notification-detail-hero notification-detail-hero--${theme}`;
+  hero.innerHTML = `<i class="fas ${schema.icon || "fa-bell"}" id="notifDetailIcon" style="font-size: 24px;"></i><div><small>نوع اعلان</small><strong id="notifDetailType" style="font-size: 15px;">${escapeHtml(schema.label)}</strong></div>`;
+  desc.textContent = notification.desc || "—";
 
-  let dynamicHtml = "";
-  if (notification.type === "purchase") {
-    dynamicHtml = `<div class="notification-detail-desc" style="margin-top:10px;padding:14px;background:rgba(22,163,74,0.05);border-radius:9px;border-right:3px solid #16a34a;"><p style="margin:0;font-size:13px;line-height:1.9;color:var(--text-primary);"><strong>شماره سفارش:</strong> ${d["شماره سفارش"] || "—"}<br><strong>خریدار:</strong> ${d["خریدار"] || "—"} · ${d["ایمیل خریدار"] || "—"}<br><strong>محصول:</strong> ${d["محصول"] || "—"}<br><strong>مبلغ:</strong> ${d["مبلغ"] || "—"} · <strong>وضعیت پرداخت:</strong> ${d["وضعیت پرداخت"] || "—"}<br><strong>روش پرداخت:</strong> ${d["روش پرداخت"] || "—"} · <strong>کد پیگیری:</strong> ${d["کد پیگیری"] || "—"}</p></div>`;
-  } else if (notification.type === "user") {
-    dynamicHtml = `<div class="signup-account-card" style="margin-top:10px;border:1px solid rgba(0,122,255,0.16);border-radius:13px;overflow:hidden;"><div class="signup-account-head" style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(0,122,255,0.06);"><div class="signup-account-avatar" style="width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:#007aff;color:#fff;font-weight:bold;font-size:16px;">${(d["نام کاربر"] || "?")[0] || "؟"}</div><div><strong style="font-size:15px;color:var(--text-primary);">${d["نام کاربر"] || "کاربر جدید"}</strong><small style="font-size:10px;color:var(--text-secondary);display:block;">${d["نقش"] || "کاربر عادی"}</small></div><span class="signup-account-status" style="margin-right:auto;padding:4px 8px;border-radius:99px;background:rgba(22,163,74,0.12);color:#16a34a;font-size:10px;font-weight:bold;">${d["وضعیت حساب"] || "فعال"}</span></div><div style="padding:12px;font-size:13px;line-height:1.8;color:var(--text-primary);"><p style="margin:0;">ایمیل: <strong>${d["ایمیل"] || "—"}</strong> · تلفن: <strong>${d["تلفن"] || "—"}</strong></p><p style="margin:5px 0 0;">روش ثبت‌نام: <strong>${d["روش ثبت‌نام"] || "—"}</strong> · تاریخ: <strong>${d["تاریخ ثبت‌نام"] || "—"}</strong></p></div></div>`;
-  } else if (notification.type === "staff") {
-    dynamicHtml = `<div class="profile-audit-card" style="margin-top:10px;border:1px solid rgba(234,179,8,0.15);border-radius:13px;overflow:hidden;background:rgba(234,179,8,0.02);"><div class="profile-audit-head" style="display:flex;gap:12px;padding:14px;background:rgba(234,179,8,0.09);"><i class="fas fa-user-gear" style="font-size:24px;color:#ca8a04;"></i><div><small style="font-size:10px;color:var(--text-secondary);">تغییر پروفایل عضو مدیریت</small><strong style="font-size:15px;color:var(--text-primary);">${d["کاربر"] || "—"}</strong></div></div><div style="padding:12px;font-size:13px;line-height:1.9;color:var(--text-primary);"><p style="margin:0;"><strong>شناسه کاربر:</strong> ${d["شناسه کاربر"] || "—"} · <strong>نقش:</strong> ${d["نقش"] || "—"}</p><p style="margin:6px 0 0;"><strong>موارد تغییرکرده:</strong> ${d["موارد تغییرکرده"] || "—"}</p><p style="margin:6px 0 0;color:var(--text-secondary);font-size:12px;">${d["جزئیات تغییرات"] || "—"}</p><p style="margin:6px 0 0;font-size:11px;color:var(--text-secondary);"><strong>زمان تغییر:</strong> ${d["زمان تغییر"] || "—"} · <strong>نشانی IP:</strong> ${d["نشانی IP"] || "—"}</p></div></div>`;
-  } else if (notification.type === "report") {
-    dynamicHtml = `<div style="margin-top:10px;"><div class="notification-report-text" style="padding:11px;border-radius:9px;background:rgba(239,68,68,0.05);border-right:3px solid #ef4444;font-size:13px;line-height:1.9;color:var(--text-primary);"><p style="margin:0;"><strong>گزارش‌دهنده:</strong> ${d["گزارش‌دهنده"] || "—"}</p><p style="margin:6px 0 0;"><strong>مورد گزارش‌شده:</strong> ${d["کاربر/مورد گزارش‌شده"] || "—"}</p><p style="margin:6px 0 0;"><strong>نوع گزارش:</strong> ${d["نوع گزارش"] || "—"} · <strong>درجه اهمیت:</strong> ${d["درجه اهمیت"] || "—"}</p><p style="margin:6px 0 0;color:var(--text-secondary);font-size:12px;"><strong>وضعیت رسیدگی:</strong> ${d["وضعیت رسیدگی"] || "—"}</p><p style="margin:6px 0 0;">${d["شرح"] || "—"}</p></div>
-      ${d["شناسه گزارش"] ? `<button type="button" class="btn-primary report-reply-btn" onclick="openReportReply('${String(d["شناسه گزارش"]).replace(/'/g, "\\'")}')"><i class="fas fa-reply"></i> پاسخ به کاربر</button>` : ""}${d["تصویر/فایل ضمیمه"] ? `<div class="notification-evidence" style="margin-top:10px;padding:11px;border:1px dashed rgba(239,68,68,0.35);border-radius:9px;display:flex;gap:10px;align-items:center;"><i class="fas fa-paperclip" style="color:#ef4444;"></i><div><small style="font-size:10px;color:var(--text-secondary);">فایل ضمیمه</small><a href="data:text/plain;charset=utf-8,${encodeURIComponent("فایل ضمیمه گزارش تخلف\nنام فایل: " + (d["تصویر/فایل ضمیمه"] || "—") + "\nتاریخ: " + (d["تاریخ"] || "—"))}" download="${d["تصویر/فایل ضمیمه"] || "attachment.txt"}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:bold;"><i class="fas fa-download" style="margin-left:5px;font-size:10px;"></i>${d["تصویر/فایل ضمیمه"] || "—"}</a></div></div>` : ""}${d["لینک شواهد"] && d["لینک شواهد"] !== "#" ? `<div style="margin-top:8px;font-size:12px;"><a href="${d["لینک شواهد"]}" style="color:var(--primary);text-decoration:none;"><i class="fas fa-link"></i> لینک شواهد</a></div>` : ""}</div>`;
-  } else if (notification.type === "deletion") {
-    dynamicHtml = `<div class="notification-deletion-warning" style="margin-top:10px;padding:11px;border-radius:9px;background:rgba(17,24,39,0.06);font-size:13px;line-height:1.9;color:var(--text-primary);"><p style="margin:0;"><strong>حساب حذف‌شده:</strong> ${d["حساب حذف‌شده"] || "—"} · <strong>نقش:</strong> ${d["نقش"] || "—"}</p><p style="margin:6px 0 0;"><strong>حذف‌کننده:</strong> ${d["حذف‌کننده"] || "—"} (${d["شناسه حذف‌کننده"] || "—"})</p><p style="margin:6px 0 0;font-size:11px;color:var(--text-secondary);"><i class="fas fa-exclamation-triangle" style="margin-left:6px;color:#ef4444;"></i>این عملیات غیرقابل بازگشت است و در سوابق سیستم ثبت شده است.</p><p style="margin:6px 0 0;font-size:11px;color:var(--text-secondary);"><strong>تاریخ:</strong> ${d["تاریخ"] || "—"}</p></div>`;
-  } else {
-    const keys = Object.keys(d);
-    if (keys.length) {
-      dynamicHtml =
-        `<div style="margin-top:10px;padding:12px;background:rgba(0,122,255,0.03);border-radius:9px;font-size:13px;line-height:1.9;color:var(--text-primary);">` +
-        keys
-          .map(
-            (k) =>
-              `<p style="margin:4px 0;"><strong>${k}:</strong> ${d[k] || "—"}</p>`,
-          )
-          .join("") +
-        `</div>`;
+  const entries = Object.entries(details).slice(0, 60);
+  dynamic.innerHTML = entries.length
+    ? `<div class="notification-detail-desc" style="margin-top:10px;padding:14px;border-radius:9px;line-height:1.9;">${entries.map(([key, value]) => `<p style="margin:4px 0;"><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value == null || value === "" ? "—" : String(value))}</p>`).join("")}</div>`
+    : "";
+
+  if (notification.type === "report") {
+    if (details["شناسه گزارش"] != null) {
+      const reply = document.createElement("button");
+      reply.type = "button";
+      reply.className = "btn-primary report-reply-btn";
+      reply.setAttribute("data-notification-report-reply", String(details["شناسه گزارش"]));
+      reply.innerHTML = '<i class="fas fa-reply"></i> پاسخ به کاربر';
+      dynamic.appendChild(reply);
+    }
+    if (details["تصویر/فایل ضمیمه"]) {
+      const evidence = document.createElement("div");
+      evidence.className = "notification-evidence";
+      const name = String(details["تصویر/فایل ضمیمه"]).slice(0, 255);
+      const link = document.createElement("a");
+      link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(
+        "فایل ضمیمه گزارش تخلف\nنام فایل: " + name + "\nتاریخ: " + String(details["تاریخ"] || "—"),
+      );
+      link.download = name || "attachment.txt";
+      link.textContent = "دانلود فایل ضمیمه: " + name;
+      evidence.appendChild(link);
+      dynamic.appendChild(evidence);
+    }
+    if (details["لینک شواهد"] && details["لینک شواهد"] !== "#") {
+      try {
+        const evidenceUrl = new URL(String(details["لینک شواهد"]), window.location.href);
+        if (evidenceUrl.protocol === "http:" || evidenceUrl.protocol === "https:") {
+          const link = document.createElement("a");
+          link.href = evidenceUrl.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "باز کردن لینک شواهد";
+          dynamic.appendChild(link);
+        }
+      } catch (e) {
+        // Invalid or non-web evidence links are shown only as escaped detail text.
+      }
     }
   }
-  document.getElementById("notifDetailDynamic").innerHTML = dynamicHtml;
   openModal("notificationDetailModal");
 }
 
@@ -648,18 +666,28 @@ function renderNotificationDropdownItems() {
 
   const container = document.getElementById("notifListContainer");
   if (!container) return;
+  const allowedThemes = new Set(["green", "blue", "yellow", "red", "black"]);
   container.innerHTML = visibleNotifications()
     .slice(0, 10)
-    .map(
-      (n) =>
-        `<div class="notif-item notif-item--${n.theme || "blue"}" style="cursor: pointer;" onclick="openNotificationDetails({ id: ${n.id}, type: '${n.type}', theme: '${n.theme || "blue"}', title: '${String(n.title).replace(/'/g, "\\'")}', desc: '${String(n.desc).replace(/'/g, "\\'")}', time: '${n.time}', createdAt: ${n.createdAt || "null"}, unread: ${n.unread ? "true" : "false"}, fresh: ${n.fresh ? "true" : "false"}, details: ${JSON.stringify(
-          n.details || {},
-        )
-          .replace(/"/g, "&quot;")
-          .replace(
-            /'/g,
-            "\\'",
-          )} })"><span class="notif-event-dot"></span><div><div style="font-size:13px;color:var(--text-primary);font-weight:600;">${escapeHtml(n.title)}</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${notificationCardSummary(n)} · ${formatNotificationTime(n.createdAt, n.time)}</div></div></div>`,
-    )
+    .map((n) => {
+      const theme = allowedThemes.has(n.theme) ? n.theme : "blue";
+      return `<div class="notif-item notif-item--${theme}" style="cursor: pointer;" data-open-notification="${escapeAttr(String(n.id))}"><span class="notif-event-dot"></span><div><div style="font-size:13px;color:var(--text-primary);font-weight:600;">${escapeHtml(n.title || "اعلان")}</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(notificationCardSummary(n))} · ${escapeHtml(formatNotificationTime(n.createdAt, n.time))}</div></div></div>`;
+    })
     .join("");
 }
+
+// One delegated handler covers both notification lists without embedding
+// notification data or executable code in generated HTML attributes.
+document.addEventListener("click", (event) => {
+  const reply = event.target.closest("[data-notification-report-reply]");
+  if (reply) {
+    event.stopPropagation();
+    openReportReply(reply.getAttribute("data-notification-report-reply"));
+    return;
+  }
+  const trigger = event.target.closest("[data-open-notification]");
+  if (!trigger || event.target.closest("[data-delete-notification]")) return;
+  const id = trigger.getAttribute("data-open-notification");
+  const notification = appState.notifications.find((item) => String(item.id) === String(id));
+  if (notification) openNotificationDetails(notification);
+});

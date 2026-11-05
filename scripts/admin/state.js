@@ -556,28 +556,19 @@ function refreshAllViews() {
       console.warn("admin: refresh step failed", error);
     }
   };
-  safe(typeof renderUsersTable === "function" ? renderUsersTable : null);
-  safe(typeof renderStaffTable === "function" ? renderStaffTable : null);
-  safe(typeof renderProductsTable === "function" ? renderProductsTable : null);
-  safe(typeof renderOrdersTable === "function" ? renderOrdersTable : null);
-  safe(typeof renderMessages === "function" ? renderMessages : null);
-  safe(
-    typeof renderDashboardOrders === "function" ? renderDashboardOrders : null,
-  );
-  safe(
-    typeof renderDashboardProducts === "function"
-      ? renderDashboardProducts
-      : null,
-  );
-  safe(
-    typeof updateDashboardMetrics === "function"
-      ? updateDashboardMetrics
-      : null,
-  );
-  safe(
-    typeof updateMessagesBadgeCount === "function"
-      ? updateMessagesBadgeCount
-      : null,
-  );
-  safe(typeof renderAdsTable === "function" ? renderAdsTable : null);
+  const active = document.querySelector(".admin-view.active")?.id.replace(/^view-/, "");
+
+  // Dashboard summaries stay current, but large hidden tables/inboxes wait
+  // until their tab is actually opened (switchView renders each on entry).
+  safe(typeof renderDashboardOrders === "function" ? renderDashboardOrders : null);
+  safe(typeof renderDashboardProducts === "function" ? renderDashboardProducts : null);
+  safe(typeof updateDashboardMetrics === "function" ? updateDashboardMetrics : null);
+  if (active === "users") safe(typeof renderUsersTable === "function" ? renderUsersTable : null);
+  if (active === "staff") safe(typeof renderStaffTable === "function" ? renderStaffTable : null);
+  if (active === "products") safe(typeof renderProductsTable === "function" ? renderProductsTable : null);
+  if (active === "orders") safe(typeof renderOrdersTable === "function" ? renderOrdersTable : null);
+  if (active === "messages") safe(typeof renderMessages === "function" ? renderMessages : null);
+  if (active === "ads") safe(typeof renderAdsTable === "function" ? renderAdsTable : null);
+
+  safe(typeof updateMessagesBadgeCount === "function" ? updateMessagesBadgeCount : null);
 }

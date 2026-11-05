@@ -199,7 +199,7 @@ function updateSettingsLockout() {
 }
 
 // --- View Router & Navigation ---
-function switchView(viewName) {
+function switchView(viewName, options) {
   document.querySelectorAll(".admin-view").forEach((view) => {
     view.classList.remove("active");
   });
@@ -219,8 +219,17 @@ function switchView(viewName) {
   document.getElementById("sidebar").classList.remove("active");
   document.getElementById("overlay").classList.remove("active");
 
-  // Section navigation should not wait on a long scroll animation.
-  window.scrollTo({ top: 0, behavior: "auto" });
+  // Section navigation should not wait on a long scroll animation. Initial
+  // paint can skip this: there is nothing to scroll back from yet.
+  if (!options || options.scroll !== false) {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  // Render data-heavy tables only when their tab is opened.
+  if (viewName === "users" && typeof renderUsersTable === "function") renderUsersTable();
+  if (viewName === "products" && typeof renderProductsTable === "function") renderProductsTable();
+  if (viewName === "orders" && typeof renderOrdersTable === "function") renderOrdersTable();
+  if (viewName === "ads" && typeof renderAdsTable === "function") renderAdsTable();
 
   // Handle Orders unread notifications
   if (viewName === "orders") {
@@ -258,68 +267,6 @@ function switchView(viewName) {
 
   if (viewName === "notifications") {
     renderNotificationsPage();
-  }
-
-  // Dashboard notifications and unread messages (step-by-step improvement)
-  if (viewName === "dashboard") {
-    // Render notification list snippet on dashboard
-    if (typeof renderNotificationDropdownItems === "function") {
-      const dashNotifs = document.getElementById("dashboardNotifications");
-      if (dashNotifs && typeof notifications !== "undefined") {
-        const latest = notifications.slice(0, 5);
-        dashNotifs.innerHTML =
-          latest
-            .map((n) => {
-              const schema =
-                notificationDetailSchemas[n.type] ||
-                notificationDetailSchemas["purchase"];
-              const colorClass =
-                n.type === "report"
-                  ? "red"
-                  : n.type === "staff"
-                    ? "yellow"
-                    : n.type === "user"
-                      ? "blue"
-                      : n.type === "deletion"
-                        ? "black"
-                        : "green";
-              const safeN = JSON.stringify(n).replace(/"/g, "&quot;");
-              return `<div onclick="openNotificationDetails(${safeN})" style="cursor: pointer; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="width: 10px; height: 10px; border-radius: 50%; background: ${colorClass === "red" ? "#FF3B30" : colorClass === "black" ? "#2C2C2E" : colorClass === "yellow" ? "#FFCC00" : colorClass === "blue" ? "#007AFF" : "#34C759"}; flex-shrink: 0;"></span>
-              <div><strong style="font-size: 13px; color: var(--text-primary);">${schema ? schema.label : n.type}</strong><p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0;">${n.time}</p></div>
-            </div>
-          </div>`;
-            })
-            .join("") ||
-          `<p style="font-size: 12px; color: var(--text-secondary);">اعلانی ثبت نشده است.</p>`;
-      }
-    }
-    // Render unread messages snippet on dashboard
-    if (
-      typeof renderMessages === "function" &&
-      typeof messages !== "undefined"
-    ) {
-      const unread = messages.filter(isUnreadMessage);
-      const dashUnread = document.getElementById("dashboardUnreadMessages");
-      const dashSummary = document.getElementById("dashboardUnreadSummary");
-      if (dashSummary)
-        dashSummary.textContent =
-          unread.length > 0 ? unread.length + " خوانده‌نشده" : "۰ خوانده‌نشده";
-      if (dashUnread) {
-        dashUnread.innerHTML =
-          unread
-            .slice(0, 3)
-            .map((m) => {
-              return `<div onclick="switchView('messages')" style="cursor: pointer; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.4); border-left: 3px solid #007aff; box-shadow: 0 4px 20px rgba(0,122,255,0.12); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">
-            <h4 style="margin: 0 0 4px; font-size: 13px; color: var(--text-primary);">${m.sender}</h4>
-            <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">${m.body ? m.body.substring(0, 60) + (m.body.length > 60 ? "..." : "") : ""}</p>
-          </div>`;
-            })
-            .join("") ||
-          `<p style="font-size: 12px; color: var(--text-secondary);">پیام خوانده‌نشده‌ای ثبت نشده است.</p>`;
-      }
-    }
   }
 
   // Handle rendering and updating messages count when entering Messages tab
@@ -368,7 +315,7 @@ function switchView(viewName) {
         ordersTable.innerHTML = recentOrders
           .map(
             (o) =>
-              `<tr onclick="openOrderDetail(${o.id || 0})" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(0,122,255,0.05)'" onmouseout="this.style.background='transparent'">\n          <td>#${o.id || "—"}</td>\n          <td>${o.customer || "—"}</td>\n          <td>${o.product || "—"}</td>\n          <td>${(o.amount || 0).toLocaleString()} تومان</td>\n          <td><span style="padding: 3px 8px; border-radius: 6px; background: ${o.status === "success" ? "rgba(22,163,74,0.12)" : o.status === "pending" ? "rgba(234,179,8,0.12)" : "rgba(239,68,68,0.12)"}; color: ${o.status === "success" ? "#16a34a" : o.status === "pending" ? "#ca8a04" : "#ef4444"}; font-size: 11px; font-weight: 700;">${getStatusText(o.status) || "—"}</span></td>\n        </tr>`,
+              `<tr data-dashboard-order-id="${escapeAttr(String(o.id || ""))}" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(0,122,255,0.05)'" onmouseout="this.style.background='transparent'">\n          <td>#${escapeHtml(o.id || "—")}</td>\n          <td>${escapeHtml(o.customer || "—")}</td>\n          <td>${escapeHtml(o.product || "—")}</td>\n          <td>${escapeHtml(String((o.amount || 0).toLocaleString()))} تومان</td>\n          <td><span style="padding: 3px 8px; border-radius: 6px; background: ${o.status === "success" ? "rgba(22,163,74,0.12)" : o.status === "pending" ? "rgba(234,179,8,0.12)" : "rgba(239,68,68,0.12)"}; color: ${o.status === "success" ? "#16a34a" : o.status === "pending" ? "#ca8a04" : "#ef4444"}; font-size: 11px; font-weight: 700;">${escapeHtml(getStatusText(o.status) || "—")}</span></td>\n        </tr>`,
           )
           .join("");
       }
@@ -382,7 +329,7 @@ function switchView(viewName) {
         topProducts.innerHTML = bestProducts
           .map(
             (p) =>
-              `<div onclick="switchView('products')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">\n          <span style="font-size: 13px; color: var(--text-primary);">${p.name || "—"}</span>\n          <span style="font-size: 12px; color: var(--text-secondary);">${(p.price || 0).toLocaleString()} تومان</span>\n        </div>`,
+              `<div onclick="switchView('products')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">\n          <span style="font-size: 13px; color: var(--text-primary);">${escapeHtml(p.name || "—")}</span>\n          <span style="font-size: 12px; color: var(--text-secondary);">${formatProductPrice(p.price)}</span>\n        </div>`,
           )
           .join("");
       }
@@ -391,8 +338,8 @@ function switchView(viewName) {
     try {
       // Recent activities — pulled from notifications (5 latest), clean, no extra fields, clickable to notifications
       const activitiesList = document.querySelector(".activities-list");
-      if (activitiesList && typeof notifications !== "undefined") {
-        const latestNotifs = notifications.slice(0, 5);
+      if (activitiesList && Array.isArray(appState.notifications)) {
+        const latestNotifs = appState.notifications.slice(0, 5);
         activitiesList.innerHTML = latestNotifs
           .map((n) => {
             const themeColor =
@@ -419,7 +366,7 @@ function switchView(viewName) {
               report: "red",
               deletion: "black",
             };
-            return `<div class="activity-item" onclick="switchView('notifications')" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">\n            <div class="activity-icon ${colorMap[n.type] || "blue"}"><i class="fas ${iconMap[n.type] || "fa-bell"}"></i></div>\n            <div class="activity-info"><h4>${n.title || "—"}</h4><p>${n.time || "—"}</p></div>\n          </div>`;
+            return `<div class="activity-item" onclick="switchView('notifications')" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">\n            <div class="activity-icon ${colorMap[n.type] || "blue"}"><i class="fas ${iconMap[n.type] || "fa-bell"}"></i></div>\n            <div class="activity-info"><h4>${escapeHtml(n.title || "—")}</h4><p>${escapeHtml(n.time || "—")}</p></div>\n          </div>`;
           })
           .join("");
       }
@@ -455,7 +402,7 @@ function switchView(viewName) {
         customersList.innerHTML = topCustomers
           .map(
             (c, idx) =>
-              `<div class="customer-item" onclick="switchView('users')" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">\n          <img src="../images/ravin.png || 12) + idx}" alt="" />\n          <div class="customer-info">\n            <h4>${c.name || "—"}</h4>\n            <p>${c.orders || 0} سفارش • ${(c.totalSpent || 0).toLocaleString()} تومان</p>\n          </div>\n          <div class="customer-badge"><i class="fas fa-star"></i><span>VIP</span></div>\n        </div>`,
+              `<div class="customer-item" onclick="switchView('users')" style="cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">\n          <img src="../images/ravin.png" alt="" />\n          <div class="customer-info">\n            <h4>${escapeHtml(c.name || "—")}</h4>\n            <p>${escapeHtml(String(c.orders || 0))} سفارش • ${escapeHtml(String((c.totalSpent || 0).toLocaleString()))} تومان</p>\n          </div>\n          <div class="customer-badge"><i class="fas fa-star"></i><span>VIP</span></div>\n        </div>`,
           )
           .join("");
       }
@@ -480,7 +427,7 @@ function switchView(viewName) {
             .slice(0, 3)
             .map(
               (m) =>
-                `<div onclick="switchView('messages')" style="cursor: pointer; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.4); border-left: 3px solid #007aff; box-shadow: 0 4px 20px rgba(0,122,255,0.12); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">\n          <h4 style="margin: 0 0 4px; font-size: 13px; color: var(--text-primary);">${m.sender}</h4>\n          <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">${m.body ? m.body.substring(0, 60) + (m.body.length > 60 ? "..." : "") : ""}</p>\n        </div>`,
+                `<div onclick="switchView('messages')" style="cursor: pointer; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.4); border-left: 3px solid #007aff; box-shadow: 0 4px 20px rgba(0,122,255,0.12); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">\n          <h4 style="margin: 0 0 4px; font-size: 13px; color: var(--text-primary);">${escapeHtml(m.sender || "")}</h4>\n          <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">${escapeHtml(m.body ? m.body.substring(0, 60) + (m.body.length > 60 ? "..." : "") : "")}</p>\n        </div>`,
             )
             .join("") ||
           `<p style="font-size: 12px; color: var(--text-secondary);">پیام خوانده‌نشده‌ای ثبت نشده است.</p>`;
@@ -490,8 +437,8 @@ function switchView(viewName) {
     try {
       // Notification snippet on dashboard (5 latest, clean glassmorphism, clickable)
       const dashNotifsEl = document.getElementById("dashboardNotifications");
-      if (dashNotifsEl && typeof notifications !== "undefined") {
-        const latest = notifications.slice(0, 5);
+      if (dashNotifsEl && Array.isArray(appState.notifications)) {
+        const latest = appState.notifications.slice(0, 5);
         dashNotifsEl.innerHTML =
           latest
             .map((n) => {
@@ -508,14 +455,7 @@ function switchView(viewName) {
                       : n.type === "deletion"
                         ? "#2C2C2E"
                         : "#34C759";
-              const safeNot = {
-                ...n,
-                title: String(n.title || "").replace(/"/g, "\\"),
-                desc: String(n.desc || "").replace(/"/g, "\\"),
-                time: String(n.time || "").replace(/"/g, "\\"),
-                details: n.details || {},
-              };
-              return `<div onclick="openNotificationDetails(${JSON.stringify(safeNot).replace(/"/g, "&quot;")})" style="cursor: pointer; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">\n            <div style="display: flex; align-items: center; gap: 10px;">\n              <span style="width: 10px; height: 10px; border-radius: 50%; background: ${dotColor}; flex-shrink: 0;"></span>\n              <div><strong style="font-size: 13px; color: var(--text-primary);">${schema ? schema.label : n.type}</strong><p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0;">${n.time}</p></div>\n            </div>\n          </div>`;
+              return `<div data-open-notification="${escapeAttr(String(n.id))}" style="cursor: pointer; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.4)'">\n            <div style="display: flex; align-items: center; gap: 10px;">\n              <span style="width: 10px; height: 10px; border-radius: 50%; background: ${dotColor}; flex-shrink: 0;"></span>\n              <div><strong style="font-size: 13px; color: var(--text-primary);">${escapeHtml(schema ? schema.label : n.type)}</strong><p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0;">${escapeHtml(n.time || "—")}</p></div>\n            </div>\n          </div>`;
             })
             .join("") ||
           `<p style="font-size: 12px; color: var(--text-secondary);">اعلانی ثبت نشده است.</p>`;
@@ -530,6 +470,16 @@ function switchView(viewName) {
 }
 
 function initNavigation() {
+  const dashboardOrders = document.getElementById("dashboardOrdersTable");
+  if (dashboardOrders) {
+    dashboardOrders.addEventListener("click", (event) => {
+      const row = event.target.closest("[data-dashboard-order-id]");
+      if (row && typeof openOrderDetailModal === "function") {
+        openOrderDetailModal(row.getAttribute("data-dashboard-order-id"));
+      }
+    });
+  }
+
   const navLinks = document.querySelectorAll(
     ".sidebar-nav a:not(.dropdown-toggle)",
   );
@@ -622,13 +572,11 @@ function initMobileSidebar() {
 }
 
 function initTables() {
-  renderDashboardOrders();
-  renderDashboardProducts();
-  renderUsersTable();
-  renderStaffTable();
-  renderProductsTable();
-  renderOrdersTable();
-  renderMessages();
+  // Paint the already-active view once. This fills the initial dashboard
+  // summaries without pre-rendering hidden tables and inboxes.
+  const activeView = document.querySelector(".admin-view.active");
+  const viewName = activeView && activeView.id.replace(/^view-/, "");
+  if (viewName === "dashboard") switchView("dashboard", { scroll: false });
 }
 
 function renderDashboardOrders() {
@@ -638,12 +586,12 @@ function renderDashboardOrders() {
     .slice(0, 5)
     .map(
       (order) => `
-        <tr>
-            <td>${order.id}</td>
+        <tr data-dashboard-order-id="${escapeAttr(String(order.id || ""))}" style="cursor:pointer">
+            <td>${escapeHtml(order.id || "—")}</td>
             <td>${escapeHtml(order.customer || "—")}</td>
             <td>${escapeHtml(order.product || "—")}</td>
-            <td>${order.amount}</td>
-            <td><span class="status ${order.status}">${getStatusText(order.status)}</span></td>
+            <td>${escapeHtml(order.amount == null ? "—" : String(order.amount))}</td>
+            <td><span class="status ${["success", "pending", "failed", "cancelled"].includes(order.status) ? order.status : "pending"}">${escapeHtml(getStatusText(order.status))}</span></td>
         </tr>
     `,
     )
@@ -661,7 +609,7 @@ function renderDashboardProducts() {
             <img src="${escapeAttr(prod.img || "../images/ravin.png")}" alt="">
             <div class="product-info">
                 <h4>${escapeHtml(prod.name || "—")}</h4>
-                <p>شناسه: ${prod.id}</p>
+                <p>شناسه: ${escapeHtml(prod.id || "—")}</p>
             </div>
             <div class="product-price">
                 <span style="font-weight: bold; color: var(--success);">${formatProductPrice(prod.price)}</span>
@@ -691,18 +639,20 @@ function showToast(message, type = "success") {
   const container = document.getElementById("toastContainer");
   if (!container) return;
 
+  const styles = {
+    success: { icon: "fa-check-circle", color: "success" },
+    error: { icon: "fa-exclamation-circle", color: "danger" },
+    info: { icon: "fa-info-circle", color: "primary" },
+  };
+  const safeType = styles[type] ? type : "info";
   const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-
-  let icon = "fa-check-circle";
-  if (type === "error") icon = "fa-exclamation-circle";
-  if (type === "info") icon = "fa-info-circle";
-
-  toast.innerHTML = `
-        <i class="fas ${icon}" style="font-size: 18px; color: var(--${type === "success" ? "success" : type === "error" ? "danger" : "primary"});"></i>
-        <span>${message}</span>
-    `;
-
+  toast.className = `toast ${safeType}`;
+  const icon = document.createElement("i");
+  icon.className = `fas ${styles[safeType].icon}`;
+  icon.style.cssText = `font-size: 18px; color: var(--${styles[safeType].color});`;
+  const text = document.createElement("span");
+  text.textContent = message == null ? "" : String(message);
+  toast.append(icon, text);
   container.appendChild(toast);
 
   setTimeout(() => {

@@ -90,6 +90,9 @@
     }
 
     if (!isMaintenance) return;
+    const safeSupportEmail = String(supportEmail).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    })[char]);
 
     // Staff keep browsing. The whole point of maintenance mode is to work on
     // the site while visitors are held back, so locking out the person doing
@@ -105,7 +108,7 @@
           <i class="fas fa-tools" style="font-size: 5rem; color: #ff9500; margin-bottom: 20px; animation: bounce 2s infinite;"></i>
           <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 10px;">🛠️ وب‌سایت در دست تعمیر و به‌روزرسانی است</h1>
           <p style="color: #94a3b8; max-width: 500px; line-height: 1.8; margin-bottom: 20px; font-size: 15px;">کاربر گرامی، ما در حال ارتقا و بهبود خدمات وبسایت هستیم. از اینکه تا پایان این فرایند مارا همراهی میکنید متشکریم.</p>
-          <div style="font-size: 13px; color: #64748b; margin-bottom: 18px;">پشتیبانی: ${supportEmail}</div>
+          <div style="font-size: 13px; color: #64748b; margin-bottom: 18px;">پشتیبانی: ${safeSupportEmail}</div>
           <a href="admin.html" style="font-size: 12px; color: #64748b; text-decoration: none; border: 1px solid #334155; padding: 7px 14px; border-radius: 8px;">ورود مدیران</a>
           
           <style>

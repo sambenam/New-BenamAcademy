@@ -145,10 +145,10 @@ function renderFloatingMessages() {
         : "";
 
       return `
-      <div onclick="openReadMessageModal(${msg.id})" style="padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; cursor: pointer; transition: background 0.3s; display: flex; flex-direction: column; gap: 4px;" class="floating-msg-item">
+      <div onclick="${escapeAttr(`openReadMessageModal(${JSON.stringify(String(msg.id))})`)}" style="padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; cursor: pointer; transition: background 0.3s; display: flex; flex-direction: column; gap: 4px;" class="floating-msg-item">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <strong style="font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 4px;">${indicator} ${escapeHtml(msg.sender || "—")}</strong>
-          <span style="font-size: 10px; color: var(--text-secondary);">${toPersianDigits(msg.time)}</span>
+          <span style="font-size: 10px; color: var(--text-secondary);">${escapeHtml(toPersianDigits(msg.time || "—"))}</span>
         </div>
         <p style="font-size: 12px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin: 0; max-width: 280px;">${unansweredBadge}${escapeHtml(msg.text || "")}</p>
       </div>
@@ -158,7 +158,7 @@ function renderFloatingMessages() {
 }
 
 function openReadMessageModal(msgId) {
-  const msg = appState.messages.find((m) => m.id === msgId);
+  const msg = appState.messages.find((m) => String(m.id) === String(msgId));
   if (!msg) return;
 
   // Mark as read (sets unread to false and saves)
@@ -306,8 +306,8 @@ function renderMessages() {
             return `
             <div style="padding: 12px; background: ${bubbleBg}; ${borderStyle} border-radius: 8px; margin-bottom: 10px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <strong style="font-size: 12px; color: ${labelColor};"><i class="fas ${isAdmin ? "fa-reply" : "fa-user"}" style="margin-left: 5px;"></i> ${bubble.name} ${isAdmin ? '<span style="font-size: 10px; font-weight: normal; color: var(--text-secondary);">(' + (bubble.name === "مدیر کل سایت" ? "مدیر کل" : "ادمین") + ")</span>" : ""}</strong>
-                <span style="font-size: 11px; color: var(--text-secondary);">${toPersianDigits(bubble.time)}</span>
+                <strong style="font-size: 12px; color: ${labelColor};"><i class="fas ${isAdmin ? "fa-reply" : "fa-user"}" style="margin-left: 5px;"></i> ${escapeHtml(bubble.name || "—")} ${isAdmin ? '<span style="font-size: 10px; font-weight: normal; color: var(--text-secondary);">(' + (bubble.name === "مدیر کل سایت" ? "مدیر کل" : "ادمین") + ")</span>" : ""}</strong>
+                <span style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(toPersianDigits(bubble.time || "—"))}</span>
               </div>
               <p style="font-size: 13px; color: var(--text-primary); margin: 0; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(bubble.text)}</p>
             </div>
@@ -323,7 +323,7 @@ function renderMessages() {
         }
 
         return `
-          <div class="notification-item ${unreadClass}" id="msg-thread-${msg.id}" style="margin-bottom: 2rem; border-radius: 20px; padding: 22px; transition: all 0.3s; display: block; ${unreadStyle} ${flashStyle}">
+          <div class="notification-item ${unreadClass}" id="msg-thread-${escapeAttr(String(msg.id))}" style="margin-bottom: 2rem; border-radius: 20px; padding: 22px; transition: all 0.3s; display: block; ${unreadStyle} ${flashStyle}">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 12px; margin-bottom: 15px; text-align: right; direction: rtl;">
               <div style="display: flex; align-items: center; gap: 6px;">
                 ${indicator}
@@ -332,7 +332,7 @@ function renderMessages() {
                 ${unansweredBadge}
               </div>
               <span class="thread-meta">
-                <span style="font-size: 11px; color: var(--text-secondary);">شروع گفتگو: ${toPersianDigits(msg.time)}</span>
+                <span style="font-size: 11px; color: var(--text-secondary);">شروع گفتگو: ${escapeHtml(toPersianDigits(msg.time || "—"))}</span>
                 <button type="button" class="thread-delete"
                         title="حذف این گفتگو" aria-label="حذف این گفتگو"
                         data-delete-message="${escapeAttr(String(msg.id))}">
@@ -349,8 +349,8 @@ function renderMessages() {
             <!-- Inline Thread Reply Form (RTL, Beautiful) -->
             <div style="margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.04); padding-top: 15px;">
               <div style="display: flex; gap: 10px; align-items: flex-end;">
-                <textarea id="inline-reply-text-${msg.id}" class="form-control" rows="1" placeholder="پاسخ خود را بنویسید..." style="flex: 1; padding: 10px; border-radius: 8px; resize: none; min-height: 40px; line-height: 1.8; text-align: right; direction: rtl; background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,0,0.08);"></textarea>
-                <button type="button" class="btn-primary" onclick="sendInlineReply(${msg.id})" style="padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; color: #fff; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <textarea id="inline-reply-text-${escapeAttr(String(msg.id))}" class="form-control" rows="1" placeholder="پاسخ خود را بنویسید..." style="flex: 1; padding: 10px; border-radius: 8px; resize: none; min-height: 40px; line-height: 1.8; text-align: right; direction: rtl; background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,0,0.08);"></textarea>
+                <button type="button" class="btn-primary" onclick="${escapeAttr(`sendInlineReply(${JSON.stringify(String(msg.id))})`)}" style="padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; color: #fff; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
                   <i class="fas fa-paper-plane"></i> ارسال پاسخ
                 </button>
               </div>

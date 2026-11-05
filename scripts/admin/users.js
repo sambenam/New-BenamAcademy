@@ -36,7 +36,7 @@ function openProfileChangePreview(changes, onConfirm, onCancel) {
     ? changes
         .map(
           (change) =>
-            `<article class="profile-review-row"><strong>${change.label}</strong><div class="profile-review-before"><small>قبل از تغییر</small><span>${change.before || "—"}</span></div><i class="fas fa-arrow-left" style="font-size:13px;color:var(--primary);align-self:center;justify-self:center;flex-shrink:0;"></i><div class="profile-review-after"><small>پس از تغییر</small><span>${change.after || "—"}</span></div></article>`,
+            `<article class="profile-review-row"><strong>${escapeHtml(change.label || "—")}</strong><div class="profile-review-before"><small>قبل از تغییر</small><span>${escapeHtml(change.before || "—")}</span></div><i class="fas fa-arrow-left" style="font-size:13px;color:var(--primary);align-self:center;justify-self:center;flex-shrink:0;"></i><div class="profile-review-after"><small>پس از تغییر</small><span>${escapeHtml(change.after || "—")}</span></div></article>`,
         )
         .join("")
     : '<p class="profile-review-empty">تغییری در اطلاعات پروفایل ثبت نشده است.</p>';
@@ -346,20 +346,20 @@ function renderUsersTable() {
         // Build the phone cell. For a restricted operator the digits are replaced
         // before they reach the DOM, so devtools cannot reveal them.
         const phoneCell = manager
-          ? `<td class="user-contact-cell">${toPersianDigits(user.phone || "—")}</td>`
+          ? `<td class="user-contact-cell">${escapeHtml(toPersianDigits(user.phone || "—"))}</td>`
           : `<td class="user-contact-cell user-cell--restricted" title="نمایش شماره تلفن فقط برای مدیر سایت مجاز است">${maskPhone(user.phone)}</td>`;
 
         const actionCell = manager
-          ? `<td><button class="btn-secondary" style="padding:6px 14px;font-size:12px;cursor:pointer;border-radius:8px;" onclick="editUser('${String(user.id).replace(/'/g, "\\'")}')" ${isPending ? "disabled" : ""}>بررسی و ویرایش</button></td>`
+          ? `<td><button class="btn-secondary" style="padding:6px 14px;font-size:12px;cursor:pointer;border-radius:8px;" onclick="${escapeAttr(`editUser(${JSON.stringify(String(user.id))})`)}" ${isPending ? "disabled" : ""}>بررسی و ویرایش</button></td>`
           : `<td><button class="btn-secondary user-action--locked" disabled title="ویرایش کاربران فقط برای مدیر سایت مجاز است"><i class="fas fa-lock" style="margin-left:6px;font-size:11px;"></i>ویرایش</button></td>`;
 
         return `<tr class="${isPending ? "user-pending-delete" : ""}">
-      <td>#${toPersianDigits(user.id)}</td>
+      <td>#${escapeHtml(toPersianDigits(user.id))}</td>
       <td style="font-weight:500;">${escapeHtml(user.name || "—")}${isPending ? '<span class="user-pending-delete-note"><i class="fas fa-exclamation-circle"></i> این کاربر حذف شده و تا چند ثانیه دیگر از لیست خارج می‌شود</span>' : ""}</td>
-      <td class="user-contact-cell">${user.email || "—"}</td>
+      <td class="user-contact-cell">${escapeHtml(user.email || "—")}</td>
       ${phoneCell}
       <td class="user-contact-cell">${formatJoinDate(user.createdAt)}</td>
-      <td><span class="status ${user.status === "فعال" ? "success" : "cancelled"}">${user.status}</span></td>
+      <td><span class="status ${user.status === "فعال" ? "success" : "cancelled"}">${escapeHtml(user.status || "—")}</span></td>
       ${actionCell}
     </tr>`;
       })
@@ -449,7 +449,7 @@ function renderStaffTable() {
 
         // Phone follows the same masking rule as the users tab.
         const phone = manager
-          ? toPersianDigits(user.phone || "—")
+          ? escapeHtml(toPersianDigits(user.phone || "—"))
           : maskPhone(user.phone);
         const phoneClass = manager ? "" : " user-cell--restricted";
 
@@ -457,7 +457,7 @@ function renderStaffTable() {
           '<span class="staff-role-badge ' +
           (isManagerRole(user.role) ? "manager" : "admin") +
           '">' +
-          user.role +
+          escapeHtml(user.role || "—") +
           "</span>" +
           (isSelf ? '<span class="staff-self-badge">شما</span>' : "") +
           (isManagerRole(user.role) && onlyManagerLeft
@@ -465,19 +465,15 @@ function renderStaffTable() {
             : "");
 
         const action = verdict.allowed
-          ? '<button class="btn-secondary" style="padding:6px 14px;font-size:12px;cursor:pointer;border-radius:8px;" onclick="editStaff(\'' +
-            String(user.id).replace(/'/g, "\\'") +
-            "')\">بررسی و ویرایش</button>"
-          : '<button class="btn-secondary user-action--locked" disabled title="' +
-            verdict.reason +
-            '"><i class="fas fa-lock" style="margin-left:6px;font-size:11px;"></i>ویرایش</button>';
+          ? `<button class="btn-secondary" style="padding:6px 14px;font-size:12px;cursor:pointer;border-radius:8px;" onclick="${escapeAttr(`editStaff(${JSON.stringify(String(user.id))})`)}">بررسی و ویرایش</button>`
+          : `<button class="btn-secondary user-action--locked" disabled title="${escapeAttr(verdict.reason || "")}"><i class="fas fa-lock" style="margin-left:6px;font-size:11px;"></i>ویرایش</button>`;
 
         return (
           '<tr class="' +
           (pendingDelete ? "user-pending-delete" : "") +
           '">' +
           "<td>#" +
-          toPersianDigits(user.id) +
+          escapeHtml(toPersianDigits(user.id)) +
           (updated
             ? '<span class="staff-update-dot staff-update-dot--between" title="تغییر جدید ثبت شده"></span>'
             : "") +
@@ -485,7 +481,7 @@ function renderStaffTable() {
           '<td style="font-weight:500;"><span class="staff-field-value ' +
           cue("name") +
           '">' +
-          user.name +
+          escapeHtml(user.name || "—") +
           "</span></td>" +
           "<td>" +
           badges +
@@ -493,7 +489,7 @@ function renderStaffTable() {
           '<td class="user-contact-cell"><span class="staff-field-value ' +
           cue("email") +
           '">' +
-          (user.email || "—") +
+          escapeHtml(user.email || "—") +
           "</span></td>" +
           '<td class="user-contact-cell' +
           phoneClass +
@@ -505,7 +501,7 @@ function renderStaffTable() {
           '<td><span class="status ' +
           (user.status === "فعال" ? "success" : "cancelled") +
           '">' +
-          user.status +
+          escapeHtml(user.status || "—") +
           "</span></td>" +
           "<td>" +
           action +
@@ -573,7 +569,7 @@ function populateStaffRoleField(staff) {
   select.innerHTML = options
     .map(function (role) {
       const label = role === "کاربر عادی" ? "کاربر عادی (تنزل به کاربر)" : role;
-      return '<option value="' + role + '">' + label + "</option>";
+      return '<option value="' + escapeAttr(role) + '">' + escapeHtml(label) + "</option>";
     })
     .join("");
   select.value = staff.role;
@@ -642,28 +638,28 @@ function openStaffAuditModal() {
     <article class="staff-audit-item" style="padding:16px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(148,163,184,0.1);margin-bottom:14px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <i class="fas fa-pen-to-square" style="font-size:18px;color:var(--primary);"></i>
-        <strong style="font-size:14px;color:var(--text-primary);">${staff ? staff.name : "کاربر"}</strong>
+        <strong style="font-size:14px;color:var(--text-primary);">${escapeHtml(staff ? staff.name : "کاربر")}</strong>
         <span style="font-size:11px;color:var(--text-secondary);margin-right:auto;">تغییر پروفایل</span>
       </div>
       <div style="padding:10px 12px;background:rgba(234,179,8,0.04);border-right:3px solid #eab308;border-radius:9px;margin-bottom:10px;">
         <strong style="font-size:12px;color:var(--text-secondary);">موارد تغییر کرده :</strong>
-        <span style="font-size:12px;color:var(--text-primary);font-weight:bold;margin-right:6px;">${entry.change ? entry.change.label || entry.text.split(" ")[0] || "—" : entry.text || "—"}</span>
+        <span style="font-size:12px;color:var(--text-primary);font-weight:bold;margin-right:6px;">${escapeHtml(entry.change ? entry.change.label || (entry.text || "").split(" ")[0] || "—" : entry.text || "—")}</span>
       </div>
       ${
         entry.change
           ? `
       <div style="padding:10px 12px;background:rgba(15,23,42,0.03);border-radius:9px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span style="font-size:13px;color:var(--text-primary);font-weight:bold;">${entry.change.label || "—"}</span>
+        <span style="font-size:13px;color:var(--text-primary);font-weight:bold;">${escapeHtml(entry.change.label || "—")}</span>
         <span style="font-size:10px;color:var(--text-secondary);">قبل از تغییر</span>
-        <b style="font-size:13px;color:#ef4444;">${entry.change.before || "—"}</b>
+        <b style="font-size:13px;color:#ef4444;">${escapeHtml(entry.change.before || "—")}</b>
         <i class="fas fa-arrow-left" style="font-size:11px;color:var(--primary);flex-shrink:0;"></i>
-        <b style="font-size:13px;color:#16a34a;">${entry.change.after || "—"}</b>
+        <b style="font-size:13px;color:#16a34a;">${escapeHtml(entry.change.after || "—")}</b>
         <span style="font-size:10px;color:var(--text-secondary);">بعد از تغییر</span>
       </div>`
-          : `<p style="margin:0 0 10px;font-size:13px;color:var(--text-secondary);line-height:1.8;">${entry.text || "—"}</p>`
+          : `<p style="margin:0 0 10px;font-size:13px;color:var(--text-secondary);line-height:1.8;">${escapeHtml(entry.text || "—")}</p>`
       }
       <div style="font-size:11px;color:var(--text-secondary);border-top:1px solid rgba(148,163,184,0.1);padding-top:8px;">
-        <strong>زمان تغییر :</strong> ${entry.date || "—"}
+        <strong>زمان تغییر :</strong> ${escapeHtml(entry.date || "—")}
       </div>
     </article>
   `,
@@ -718,7 +714,7 @@ function renderUserOrders(user) {
   list.innerHTML = orders.length
     ? orders
         .map(function (order) {
-          return `<article class="user-order-item"><div class="user-order-item__top"><span>${order.id}</span><span class="status ${order.status}">${getStatusText(order.status)}</span></div><p>${order.product || "محصول"}</p><div class="user-order-item__meta"><span>${toPersianDigits(order.date || "—")}</span><strong>${toPersianDigits(order.amount || "—")}</strong></div></article>`;
+          return `<article class="user-order-item"><div class="user-order-item__top"><span>${escapeHtml(order.id || "—")}</span><span class="status ${["success", "pending", "failed", "cancelled"].includes(order.status) ? order.status : "pending"}">${escapeHtml(getStatusText(order.status))}</span></div><p>${escapeHtml(order.product || "محصول")}</p><div class="user-order-item__meta"><span>${escapeHtml(toPersianDigits(order.date || "—"))}</span><strong>${escapeHtml(toPersianDigits(order.amount || "—"))}</strong></div></article>`;
         })
         .join("")
     : '<p style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px 0;margin:0;">هنوز سفارشی برای این کاربر ثبت نشده است.</p>';

@@ -181,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // and the badge could never reach zero. Real messages now arrive from the
   // contact form and the assistant widget, so the placeholder is gone.
   initNotifications();
-  renderNotificationsPage();
   // A demo stack of seven fake notifications used to be injected here on
   // every load, and it began with `appState.notifications = []` - so any
   // real event, including the profile changes managers are meant to be told
@@ -557,16 +556,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDashboardMetrics();
   updateOrdersNotifications();
   updateSettingsLockout();
-  if (typeof renderAnalyticsView === "function") {
-    renderAnalyticsView();
-  }
-
-  // Render message badges and containers on load
+  // Badges are cheap; heavy message and analytics views render on first entry.
   updateMessagesBadgeCount();
-  renderMessages();
-  if (typeof renderAnalyticsView === "function") {
-    renderAnalyticsView();
-  }
 });
 
 /**
