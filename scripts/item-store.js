@@ -1,6 +1,39 @@
 const ITEM_CONTENT_STORAGE_KEY = "benamacademyItemContent";
 const ADDED_ITEMS_KEY = "benamacademyAddedItems";
 const DELETED_ITEMS_KEY = "benamacademyDeletedItems";
+const CONTENT_ITEM_ORDER_KEY = "benamacademyContentItemOrder";
+
+function loadContentItemOrder() {
+  try {
+    const raw = localStorage.getItem(CONTENT_ITEM_ORDER_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const order = {};
+    Object.keys(parsed).forEach((categoryKey) => {
+      if (Array.isArray(parsed[categoryKey])) {
+        order[categoryKey] = parsed[categoryKey].filter((id) => typeof id === "string");
+      }
+    });
+    return order;
+  } catch (error) {
+    console.warn("item-store: خطا در خواندن ترتیب آیتم‌ها", error);
+    return {};
+  }
+}
+
+function moveContentItemToFront(categoryKey, itemId, existingItems) {
+  if (!categoryKey || !itemId) return;
+  const order = loadContentItemOrder();
+  const currentIds = (Array.isArray(existingItems) ? existingItems : [])
+    .map((item) => item && item.id)
+    .filter((id) => typeof id === "string" && id !== itemId);
+  const available = new Set(currentIds);
+  const previousOrder = Array.isArray(order[categoryKey]) ? order[categoryKey] : [];
+  const orderedPrevious = previousOrder.filter((id, index) => available.has(id) && previousOrder.indexOf(id) === index);
+  orderedPrevious.push(...currentIds.filter((id) => !orderedPrevious.includes(id)));
+  order[categoryKey] = [itemId, ...orderedPrevious];
+  localStorage.setItem(CONTENT_ITEM_ORDER_KEY, JSON.stringify(order));
+}
 
 function loadContentOverrides() {
   try {
@@ -109,6 +142,7 @@ function applyContentOverrides(data) {
   const overrides = loadContentOverrides();
   const deletedIds = loadDeletedItemIds();
   const addedItems = loadAddedItems();
+  const contentItemOrder = loadContentItemOrder();
 
   Object.keys(data).forEach(function (catKey) {
     const category = data[catKey];
@@ -138,8 +172,19 @@ function applyContentOverrides(data) {
       }
     });
 
-    // 2.5 Sort items numerically by ID (so they sit next to each other correctly, e.g. diploma-1, diploma-2, diploma-3)
+    // 2.5 Keep an explicit category order when present. IDs stay stable; this
+    // order map lets newly added items lead the list without renaming existing
+    // IDs or breaking saved content and article URLs.
+    const categoryOrder = contentItemOrder[catKey] || [];
+    const orderIndex = new Map(categoryOrder.map((id, index) => [id, index]));
     category.items.sort(function (a, b) {
+      const aIndex = orderIndex.has(a.id) ? orderIndex.get(a.id) : null;
+      const bIndex = orderIndex.has(b.id) ? orderIndex.get(b.id) : null;
+      if (aIndex !== null || bIndex !== null) {
+        if (aIndex === null) return 1;
+        if (bIndex === null) return -1;
+        if (aIndex !== bIndex) return aIndex - bIndex;
+      }
       return String(a.id).localeCompare(String(b.id), undefined, {
         numeric: true,
         sensitivity: "base",

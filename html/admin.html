@@ -1568,6 +1568,7 @@
         </button>
       </div>
       <form id="addNewItemForm">
+        <input type="hidden" id="newItemId" value="" />
         <div class="add-item-body">
           <!-- Right column: what the item is -->
           <section class="add-item-col">
@@ -1577,15 +1578,17 @@
 
             <div class="add-item-row">
               <div class="form-group">
-                <label>شناسه یکتا (انگلیسی)</label>
-                <input type="text" id="newItemId" class="form-control" placeholder="custom-article-1" required />
-              </div>
-
-              <div class="form-group">
                 <label>دسته هدف</label>
                 <select id="newItemCategory" class="form-control select-dropdown" required>
                   <!-- Populate dynamically with JS -->
                 </select>
+              </div>
+
+              <div class="form-group">
+                <label for="newItemIdPreview">شناسه یکتا (خودکار)</label>
+                <input type="text" id="newItemIdPreview" class="form-control" readonly aria-describedby="newItemIdHelp"
+                  placeholder="پس از انتخاب دسته ساخته می‌شود" />
+                <small id="newItemIdHelp" class="add-item-id-help">شناسه به‌صورت خودکار ساخته می‌شود؛ شناسه‌های قبلی ثابت می‌مانند و آیتم تازه اول قرار می‌گیرد.</small>
               </div>
             </div>
 

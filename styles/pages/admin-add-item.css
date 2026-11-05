@@ -81,8 +81,8 @@
   font-weight: 600;
 }
 
-/* The id and the category are both short. Side by side they save a whole
-   row of height and read as the pair they are. */
+/* The category and generated-ID preview are both short. Side by side they
+   save a row of height and make the automatic identifier easy to inspect. */
 .add-item-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -91,6 +91,14 @@
 
 .add-item-row .form-group {
   margin-bottom: 13px;
+}
+
+.add-item-id-help {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  line-height: 1.7;
 }
 
 /* The category select carried its colours as an inline style attribute, which

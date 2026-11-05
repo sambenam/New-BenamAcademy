@@ -159,6 +159,55 @@ function refreshPlacementField() {
   );
 }
 
+function getUsedContentItemIds() {
+  const used = new Set();
+  if (typeof siteData !== "undefined") {
+    Object.values(siteData).forEach((category) => {
+      if (category && Array.isArray(category.items)) {
+        category.items.forEach((item) => item && item.id && used.add(String(item.id)));
+      }
+    });
+  }
+  if (typeof loadAddedItems === "function") {
+    loadAddedItems().forEach((item) => item && item.id && used.add(String(item.id)));
+  }
+  if (typeof loadDeletedItemIds === "function") {
+    loadDeletedItemIds().forEach((id) => used.add(String(id)));
+  }
+  if (typeof loadContentOverrides === "function") {
+    Object.keys(loadContentOverrides()).forEach((id) => used.add(id));
+  }
+  return used;
+}
+
+function generateUniqueContentItemId(categoryKey) {
+  const prefix = String(categoryKey || "content")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "content";
+  const used = getUsedContentItemIds();
+
+  let sequence = 1;
+  let id = `${prefix}-item-${sequence}`;
+  while (used.has(id)) {
+    sequence += 1;
+    id = `${prefix}-item-${sequence}`;
+  }
+  return id;
+}
+
+function refreshGeneratedItemId() {
+  const category = document.getElementById("newItemCategory");
+  const idField = document.getElementById("newItemId");
+  const preview = document.getElementById("newItemIdPreview");
+  if (!category || !idField || !preview || !category.value) return;
+  const id = generateUniqueContentItemId(category.value);
+  idField.value = id;
+  preview.value = id;
+}
+
 function deleteContentItem(itemId) {
   if (confirm("آیا از حذف این آیتم اطمینان دارید؟ این عمل قابل بازگشت نیست.")) {
     if (typeof addDeletedItemId === "function") {
@@ -211,6 +260,7 @@ function initContentAdmin() {
   if (addNewBtn) {
     addNewBtn.addEventListener("click", function () {
       populateCategorySelect();
+      refreshGeneratedItemId();
       refreshPlacementField();
       openModal("addNewItemModal");
     });
@@ -222,15 +272,26 @@ function initContentAdmin() {
   // at all.
   const newItemCategory = document.getElementById("newItemCategory");
   if (newItemCategory) {
-    newItemCategory.addEventListener("change", refreshPlacementField);
+    newItemCategory.addEventListener("change", function () {
+      refreshGeneratedItemId();
+      refreshPlacementField();
+    });
   }
 
   if (addNewForm) {
     addNewForm.addEventListener("submit", function (event) {
       event.preventDefault();
 
-      const id = document.getElementById("newItemId").value.trim();
+      const idField = document.getElementById("newItemId");
+      const preview = document.getElementById("newItemIdPreview");
+      const requestedId = idField ? idField.value.trim() : "";
       const catKey = document.getElementById("newItemCategory").value;
+      const usedIds = getUsedContentItemIds();
+      const id = requestedId && !usedIds.has(requestedId)
+        ? requestedId
+        : generateUniqueContentItemId(catKey);
+      if (idField) idField.value = id;
+      if (preview) preview.value = id;
       const title = document.getElementById("newItemTitle").value.trim();
       const image =
         document.getElementById("newItemImage").value.trim() ||
@@ -303,6 +364,13 @@ function initContentAdmin() {
           downloads: [],
         },
       };
+
+      if (typeof moveContentItemToFront === "function") {
+        const currentItems = siteData[catKey] && Array.isArray(siteData[catKey].items)
+          ? siteData[catKey].items
+          : [];
+        moveContentItemToFront(catKey, id, currentItems);
+      }
 
       if (typeof saveAddedItem === "function") {
         saveAddedItem(newItem);

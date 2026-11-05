@@ -26,7 +26,7 @@ const t = (n, c, d) => {
 };
 const section = (s) => console.log("\n" + s);
 
-function boot() {
+function boot(seedStore) {
   const html = fs.readFileSync(path.join(ROOT, "html/admin.html"), "utf8");
   const dom = new JSDOM(html, {
     url: "http://localhost/html/admin.html",
@@ -34,7 +34,7 @@ function boot() {
     pretendToBeVisual: true,
   });
   const w = dom.window;
-  const store = {
+  const store = seedStore || {
     benamacademySession: JSON.stringify({
       token: "t",
       isAdmin: true,
@@ -139,11 +139,55 @@ t(
 w.__toast = null;
 doc.getElementById("newItemId").value = "test-item-1";
 doc.getElementById("newItemCategory").value = cats[0].value;
-doc.getElementById("newItemTitle").value = "تکراری";
+doc.getElementById("newItemTitle").value = "آیتم با شناسهٔ تکراری";
 doc
   .getElementById("addNewItemForm")
   .dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true }));
-t("شناسه تکراری رد می‌شود", w.__toast && w.__toast.ty === "error");
+const duplicateRecovery = w.__t.loadAddedItems().find((item) => item.title === "آیتم با شناسهٔ تکراری");
+t(
+  "شناسهٔ تکراری با شناسهٔ خودکار یکتا جایگزین می‌شود",
+  !!duplicateRecovery && duplicateRecovery.id !== "test-item-1",
+  duplicateRecovery && duplicateRecovery.id,
+);
+
+section("شناسهٔ خودکار و ترتیب اول دسته");
+({ w, doc, store } = boot());
+doc.getElementById("addNewContentItemBtn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+function submitAutoNews(title) {
+  const category = doc.getElementById("newItemCategory");
+  category.value = "exams";
+  category.dispatchEvent(new w.Event("change", { bubbles: true }));
+  doc.getElementById("newItemId").value = "";
+  doc.getElementById("newItemTitle").value = title;
+  doc.getElementById("newItemExcerpt").value = "خلاصهٔ خبر";
+  const preview = doc.getElementById("newItemIdPreview").value;
+  doc
+    .getElementById("addNewItemForm")
+    .dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true }));
+  return {
+    preview,
+    item: w.__t.loadAddedItems().find((entry) => entry.title === title),
+  };
+}
+const firstAutoNews = submitAutoNews("ثبت نام آزمون");
+t("شناسهٔ خبر بدون ورود دستی تولید شد", !!firstAutoNews.item && firstAutoNews.item.id === firstAutoNews.preview, `${firstAutoNews.preview} / ${firstAutoNews.item && firstAutoNews.item.id}`);
+t("خبر تازه به ابتدای دسته منتقل شد", w.__t.siteData.exams.items[0]?.id === firstAutoNews.item?.id, w.__t.siteData.exams.items.slice(0, 3).map((item) => item.id).join(", "));
+const originalNewsId = w.__t.siteData.exams.items[1]?.id;
+const secondAutoNews = submitAutoNews("ثبت نام کنکور");
+t("آیتم بعدی هم شناسهٔ یکتای خودکار گرفت", !!secondAutoNews.item && secondAutoNews.item.id !== firstAutoNews.item?.id);
+t("خبر جدید اول است و خبر قبلی به رتبهٔ بعدی رفت", w.__t.siteData.exams.items[0]?.id === secondAutoNews.item?.id && w.__t.siteData.exams.items[1]?.id === firstAutoNews.item?.id);
+t("شناسهٔ قدیمی خبرهای موجود تغییر نکرد", w.__t.siteData.exams.items.some((item) => item.id === originalNewsId));
+const diplomaCategory = doc.getElementById("newItemCategory");
+diplomaCategory.value = "diploma";
+diplomaCategory.dispatchEvent(new w.Event("change", { bubbles: true }));
+doc.getElementById("newItemId").value = "";
+doc.getElementById("newItemTitle").value = "جزوهٔ جدید دیپلم";
+doc.getElementById("newItemExcerpt").value = "خلاصهٔ جزوه";
+doc.getElementById("addNewItemForm").dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true }));
+const autoDiploma = w.__t.loadAddedItems().find((item) => item.title === "جزوهٔ جدید دیپلم");
+t("شناسه‌سازی و تقدم برای دسته‌ای غیر از اخبار هم کار می‌کند", !!autoDiploma && autoDiploma.id.startsWith("diploma-item-") && w.__t.siteData.diploma.items[0]?.id === autoDiploma.id);
+({ w, doc } = boot(store));
+t("ترتیب و شناسه‌ها پس از بارگذاری دوباره حفظ شدند", w.__t.siteData.exams.items[0]?.id === secondAutoNews.item?.id && w.__t.siteData.exams.items[1]?.id === firstAutoNews.item?.id && w.__t.siteData.diploma.items[0]?.id === autoDiploma?.id);
 
 // ---------------------------------------------------------------- delete
 section("دکمه حذف");

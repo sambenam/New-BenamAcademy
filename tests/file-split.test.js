@@ -358,10 +358,10 @@ const section = (s) => console.log("\n" + s);
     });
     // The 2,702 baseline predates the header-label editor. The separated
     // submenu fields and custom-item editor brought the observed count to 2,770;
-    // the current inline hierarchy and delete controls add ten rules while
-    // retaining the shared subgroup styling. Keep this count explicit so an
-    // unexplained drop catches a stylesheet that stopped loading.
-    t("همه قوانین CSS بارگذاری شدند", rules === 2780, String(rules));
+    // the inline hierarchy and delete controls add ten rules, and the generated
+    // content-ID hint adds one more. Keep this count explicit so an unexplained
+    // drop catches a stylesheet that stopped loading.
+    t("همه قوانین CSS بارگذاری شدند", rules === 2781, String(rules));
 
     const toast = d.createElement("div");
     toast.className = "toast success";

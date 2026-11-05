@@ -660,12 +660,16 @@ section("۱۱. چیدمان پنجره — عریض و کوتاه");
     row.querySelectorAll(".form-group").length === 2,
     String(row.querySelectorAll(".form-group").length),
   );
+  t("شناسهٔ فرم دستی نیست", doc.getElementById("newItemId").type === "hidden");
+  t("شناسهٔ پیش‌نمایش فقط‌خواندنی است", doc.getElementById("newItemIdPreview").readOnly);
+  t("راهنما توضیح می‌دهد شناسه خودکار است", doc.getElementById("newItemIdHelp").textContent.includes("خودکار"));
 
   section("۱۲. هیچ فیلدی در بازچینی گم نشد");
   // Rearranging markup is exactly when a field quietly disappears, and every
   // one of these is read by id at save time.
   [
     "newItemId",
+    "newItemIdPreview",
     "newItemCategory",
     "newItemTitle",
     "newItemImage",
