@@ -154,7 +154,7 @@
 body.home-page .hero-section {
   margin: 0 0 0;
   position: relative;
-  background: #071321 url(/images/home-hero-reference.jpg) center 48% / cover no-repeat;
+  background: #071321 url("../../images/home-hero-reference.jpg") center 48% / cover no-repeat;
   display: flex;
   align-items: center;
   padding: 55px 6.8% 48px;
