@@ -237,13 +237,22 @@ body.home-page .hero-stats {
 }
 
 @media (max-width: 700px) {
+/* On narrow screens the photo sits below the text: the top of the hero is
+   dark enough for the title, and the overlay fades out toward the bottom so
+   the image stays visible instead of being buried under two opaque layers. */
 body.home-page .hero-section {
-  min-height: 440px;
-  background-image: linear-gradient(90deg, rgba(7, 17, 31, .95), rgba(7, 17, 31, .78)),
-      linear-gradient(0deg, rgba(7, 17, 31, .68), transparent 45%),
+  min-height: 480px;
+  align-items: flex-start;
+  background-image:
+      linear-gradient(180deg, rgba(6, 17, 31, .96) 0%, rgba(6, 17, 31, .86) 38%, rgba(6, 17, 31, .42) 68%, rgba(6, 17, 31, .12) 100%),
       url("../../images/home-hero-reference.jpg");
-  background-position: center, center, right center;
-  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-position: center, center 30%;
+  background-size: cover, cover;
+}
+
+/* The desktop side-shade would re-darken the whole image on mobile. */
+body.home-page .hero-shade {
+  display: none;
 }
 
 body.home-page .hero-content {

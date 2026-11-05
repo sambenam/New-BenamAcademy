@@ -282,6 +282,15 @@ body.home-page #courses {
     }
 }
 
+/* The legacy rule above (max-width:450px) hides card banners, but the
+   homepage card layout reserves a 40% column for the image — without this
+   override the image disappears and the badge lands on the title. */
+@media (max-width: 450px) {
+    body.home-page .popular-courses_banner {
+        display: block;
+    }
+}
+
 @media (max-width: 430px) {
     body.home-page .popular-courses_items {
         grid-template-columns: 1fr;
