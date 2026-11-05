@@ -1,152 +1,197 @@
-
+/* Public promotion card — compact, readable and consistent with the site's
+   dark navy / blue visual language. The existing hide/reveal control remains. */
 .ads-widget {
+  --ad-handle-size: 42px;
   position: fixed;
-  bottom: 10rem;
+  bottom: 6.5rem;
   left: 20px;
-  width: 210px;
-  max-width: calc(100% - 40px);
   z-index: 9000;
   display: flex;
   direction: ltr;
-  background: var(--bg-glass);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
+  width: min(340px, calc(100vw - 40px));
+  max-width: calc(100vw - 40px);
   overflow: hidden;
-  transform: translateX(-130%);
+  border: 1px solid rgba(147, 197, 253, 0.2);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(59, 130, 246, 0.2), transparent 55%),
+    linear-gradient(145deg, rgba(19, 34, 62, 0.97), rgba(10, 19, 37, 0.98));
+  box-shadow: 0 18px 48px rgba(2, 8, 23, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   opacity: 0;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease,
-    width 0.35s ease, box-shadow 0.3s ease;
+  transform: translateX(calc(-100% - 24px));
+  transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease, box-shadow 0.25s ease;
+  isolation: isolate;
+}
+
+.ads-widget::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #38bdf8, #6366f1, #a78bfa);
+  content: "";
 }
 
 .ads-widget.is-visible {
   opacity: 1;
-}
-
-.ads-widget.is-visible:not(.is-collapsed) {
   transform: translateX(0);
 }
 
-/* Closed: slide almost fully off the left edge so only the handle stays. */
-.ads-widget.is-visible.is-collapsed {
-  transform: translateX(calc(-100% - 20px + 44px));
-}
-
-/* Open + hovered: grow to the full ad. */
 .ads-widget.is-visible:not(.is-collapsed):hover {
-  width: 320px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 22px 56px rgba(2, 8, 23, 0.55),
+    0 0 28px rgba(59, 130, 246, 0.13);
 }
 
-/* The ad itself. */
+/* Leave only the handle on screen when the visitor tucks the card away. */
+.ads-widget.is-visible.is-collapsed {
+  transform: translateX(calc(-100% + var(--ad-handle-size) - 12px));
+}
+
 .ads-widget__content {
   flex: 1;
-  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 12px 14px;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  direction: rtl;
+  color: var(--text-primary, #f1f5f9);
+  text-align: right;
   text-decoration: none;
-  color: var(--text-primary);
 }
 
-/* Image: hidden (compact) by default, slides in on hover. */
+.ads-widget__content:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: -4px;
+  border-radius: 18px;
+}
+
 .ads-widget__img {
-  width: 0;
-  height: 0;
+  flex: 0 0 68px;
+  width: 68px;
+  height: 68px;
   margin: 0;
-  opacity: 0;
+  border: 1px solid rgba(191, 219, 254, 0.22);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.06);
   object-fit: cover;
-  border-radius: 10px;
-  flex: 0 0 auto;
-  background: var(--bg-secondary);
-  transition: width 0.35s ease, height 0.35s ease, margin 0.35s ease,
-    opacity 0.3s ease;
-}
-
-.ads-widget:not(.is-collapsed):hover .ads-widget__img {
-  width: 56px;
-  height: 56px;
-  margin-left: 12px;
-  opacity: 1;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .ads-widget__body {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
   flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
   direction: rtl;
 }
 
-.ads-widget__title {
-  font-size: 14px;
+.ads-widget__body::before {
+  margin-bottom: 1px;
+  padding: 3px 8px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.13);
+  color: #93c5fd;
+  content: "پیشنهاد ویژه";
+  font-size: 10px;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.4;
 }
 
-/* Details (متن تبلیغ + CTA): hidden (compact) by default, shown on hover. */
-.ads-widget__text,
-.ads-widget__cta {
-  max-height: 0;
-  opacity: 0;
+.ads-widget__title {
+  display: -webkit-box;
   overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.35s ease;
+  max-width: 100%;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .ads-widget__text {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  line-height: 1.7;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  color: #cbd5e1;
+  font-size: 11.5px;
+  line-height: 1.8;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .ads-widget__cta {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--accent-secondary);
-}
-
-.ads-widget:not(.is-collapsed):hover .ads-widget__text {
-  max-height: 60px;
-  opacity: 1;
-  margin-top: 2px;
-}
-
-.ads-widget:not(.is-collapsed):hover .ads-widget__cta {
-  max-height: 30px;
-  opacity: 1;
-  margin-top: 4px;
-}
-
-/* Open/close handle — coloured strip on the card's right edge. */
-.ads-widget__handle {
-  flex: 0 0 44px;
-  border: none;
-  border-left: 1px solid var(--border-color);
-  background: linear-gradient(var(--accent-primary), var(--accent-tertiary));
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 7px;
+  margin-top: 5px;
+  padding: 7px 12px;
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.ads-widget__cta::after {
+  content: "←";
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.ads-widget__content:hover .ads-widget__cta {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.ads-widget__content:hover .ads-widget__cta::after {
+  transform: translateX(-2px);
+}
+
+.ads-widget__handle {
+  flex: 0 0 var(--ad-handle-size);
+  display: grid;
+  place-items: center;
+  width: var(--ad-handle-size);
+  min-height: 100%;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid rgba(191, 219, 254, 0.12);
+  background: linear-gradient(180deg, #3b82f6, #4338ca);
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.ads-widget__handle:hover {
+  filter: brightness(1.12);
+}
+
+.ads-widget__handle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
 }
 
 .ads-widget__handle i {
-  transition: transform 0.3s ease;
+  font-size: 13px;
+  transition: transform 0.25s ease;
 }
 
 .ads-widget.is-collapsed .ads-widget__handle i {
@@ -155,21 +200,47 @@
 
 @media (max-width: 600px) {
   .ads-widget {
-    bottom: 7rem;
+    --ad-handle-size: 40px;
+    bottom: 5.5rem;
     left: 12px;
-    width: 190px;
-  }
-
-  .ads-widget.is-visible:not(.is-collapsed):hover {
-    width: 280px;
-  }
-
-  .ads-widget:not(.is-collapsed):hover .ads-widget__img {
-    width: 48px;
-    height: 48px;
+    width: min(360px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    border-radius: 17px;
   }
 
   .ads-widget.is-visible.is-collapsed {
-    transform: translateX(calc(-100% - 12px + 44px));
+    transform: translateX(calc(-100% + var(--ad-handle-size) - 4px));
+  }
+
+  .ads-widget__content {
+    gap: 11px;
+    padding: 13px;
+  }
+
+  .ads-widget__img {
+    flex-basis: 58px;
+    width: 58px;
+    height: 58px;
+    border-radius: 13px;
+  }
+
+  .ads-widget__title {
+    font-size: 13px;
+  }
+
+  .ads-widget__text {
+    font-size: 11px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ads-widget,
+  .ads-widget__img,
+  .ads-widget__cta,
+  .ads-widget__cta::after,
+  .ads-widget__handle i {
+    transition-duration: 0.01ms !important;
   }
 }
