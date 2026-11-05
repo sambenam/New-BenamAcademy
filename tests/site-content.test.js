@@ -151,22 +151,33 @@ section("دکمه حذف");
 const victim = w.__t.siteData[Object.keys(w.__t.siteData)[0]].items[0];
 // Count from the data, not the rendered HTML: switching views re-renders and
 // the container may be empty at this point.
+// Header aggregate categories intentionally repeat leaf items. Count logical
+// content records by unique ID, rather than counting each category reference.
 const countItems = () =>
-  Object.values(w.__t.siteData).reduce(
-    (n, cat) => n + (cat && cat.items ? cat.items.length : 0),
-    0,
-  );
+  new Set(
+    Object.values(w.__t.siteData).flatMap((cat) =>
+      cat && Array.isArray(cat.items)
+        ? cat.items.map((item) => item && item.id).filter(Boolean)
+        : [],
+    ),
+  ).size;
 const before = countItems();
 
 w.__t.deleteContentItem(victim.id);
 t("از siteData حذف شد", !w.__t.findSiteItem(victim.id));
+t(
+  "از همهٔ دسته‌هایی که نسخهٔ تجمیعی دارند حذف شد",
+  !Object.values(w.__t.siteData).some((cat) =>
+    cat && Array.isArray(cat.items) && cat.items.some((item) => item.id === victim.id),
+  ),
+);
 t("در فهرست حذف‌شده‌ها ثبت شد", w.__t.loadDeletedItemIds().includes(victim.id));
 
 w.__t.renderContentTable();
 const html = doc.getElementById("groupedContentContainer").innerHTML;
 t("از جدول رفت", !html.includes("'" + victim.id + "'"));
 t(
-  "فقط همان یکی حذف شد",
+  "فقط همان محتوای یکتا حذف شد",
   countItems() === before - 1,
   `${before} -> ${countItems()}`,
 );
