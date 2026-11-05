@@ -136,7 +136,9 @@ t(
   shown === inData,
   `${shown} از ${inData}`,
 );
-t("هیچ آیتمی جا نیفتاده", shown > 80, String(shown));
+// The bar dropped from 80 when the legacy "فایل‌ها"/"مقالات" header groups
+// (7 categories, 9 items) were removed from the seed data.
+t("هیچ آیتمی جا نیفتاده", shown > 70, String(shown));
 
 const cats = Object.keys(w.__t.siteData).filter(w.__t.isAdminContentCategory).length;
 t(
@@ -510,9 +512,16 @@ t(
     .innerHTML.includes("آیتم شمارنده"),
 );
 t(
-  "دسته‌های legacy در گروه سایر دسته‌بندی‌ها باقی ماندند",
-  groupStats("سایر دسته‌بندی‌های موجود").label ===
-    groupStats("سایر دسته‌بندی‌های موجود").cards,
+  "گروه «سایر دسته‌بندی‌های موجود» دیگر وجود ندارد",
+  ![...doc.querySelectorAll(".content-group__title")].some((el) =>
+    el.textContent.includes("سایر دسته‌بندی‌های موجود"),
+  ),
+);
+t(
+  "دسته‌های legacy فایل‌ها حذف شده‌اند",
+  ![...doc.querySelectorAll(".content-category__key")].some((el) =>
+    ["power_point", "Exel", "Word", "accounting_article"].includes(el.textContent),
+  ),
 );
 
 w.__t.deleteContentItem("counter-check-1");

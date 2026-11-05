@@ -19,7 +19,6 @@ const ADMIN_HIDDEN_CONTENT_CATEGORIES = [
   "aboutUs",
   // Header aggregates are navigation destinations, not editable leaf groups.
   "forStudents",
-  "accountingFiles",
   "regulations",
 ];
 
